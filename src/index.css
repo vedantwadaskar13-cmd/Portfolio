@@ -1,0 +1,120 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --bg-dark: #030712;
+    --neon-cyan: #00f3ff;
+    --neon-emerald: #00ff9d;
+    --neon-purple: #8b5cf6;
+  }
+
+  body {
+    background-color: #030712;
+    color: #f1f5f9;
+    font-family: 'Inter', sans-serif;
+    overflow-x: hidden;
+  }
+
+  /* Custom Cyberpunk Scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #030712;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #1e293b;
+    border-radius: 3px;
+    border: 1px solid rgba(0, 243, 255, 0.2);
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #00f3ff;
+  }
+}
+
+/* Custom Glassmorphism HUD Utility Classes */
+.glass-hud {
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(56, 189, 248, 0.15);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.4);
+}
+
+.glass-hud-hover {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.glass-hud-hover:hover {
+  border-color: rgba(0, 243, 255, 0.4);
+  box-shadow: 0 0 25px rgba(0, 243, 255, 0.25), inset 0 0 15px rgba(0, 243, 255, 0.05);
+}
+
+.glow-text-cyan {
+  text-shadow: 0 0 12px rgba(0, 243, 255, 0.6);
+}
+
+.glow-text-emerald {
+  text-shadow: 0 0 12px rgba(0, 255, 157, 0.6);
+}
+
+.glow-border-cyan {
+  border-color: rgba(0, 243, 255, 0.6);
+  box-shadow: 0 0 15px rgba(0, 243, 255, 0.3);
+}
+
+/* Scanline Effect Overlay */
+.scanline-bg {
+  background: linear-gradient(
+    to bottom,
+    rgba(255,255,255,0),
+    rgba(255,255,255,0) 50%,
+    rgba(0, 243, 255, 0.02) 50%,
+    rgba(0, 243, 255, 0.02)
+  );
+  background-size: 100% 4px;
+}
+
+/* Cyber Grid Background Pattern */
+.bg-grid-pattern {
+  background-size: 40px 40px;
+  background-image: 
+    linear-gradient(to right, rgba(56, 189, 248, 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(56, 189, 248, 0.04) 1px, transparent 1px);
+}
+
+/* Animated Corner HUD Cutouts */
+.hud-corner-box {
+  position: relative;
+}
+.hud-corner-box::before,
+.hud-corner-box::after {
+  content: '';
+  position: absolute;
+  width: 8px;
+  height: 8px;
+  border-color: #00f3ff;
+  pointer-events: none;
+}
+.hud-corner-box::before {
+  top: 0;
+  left: 0;
+  border-top: 2px solid #00f3ff;
+  border-left: 2px solid #00f3ff;
+}
+.hud-corner-box::after {
+  bottom: 0;
+  right: 0;
+  border-bottom: 2px solid #00f3ff;
+  border-right: 2px solid #00f3ff;
+}
+
+@keyframes radarSweep {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.animate-radar {
+  animation: radarSweep 10s linear infinite;
+}
