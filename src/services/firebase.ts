@@ -1,8 +1,8 @@
 import { initializeApp, getApps, getApp } from 'firebase/app';
-import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged, User } from 'firebase/auth';
-import { getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc, setDoc } from 'firebase/firestore';
+import { getAuth } from 'firebase/auth';
+import { getFirestore, collection, addDoc, doc, setDoc, onSnapshot, getDoc } from 'firebase/firestore';
 
-// Default Firebase Configuration (using Vite environment variables)
+// Default Firebase Configuration
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyDummyKeyForLocalTestingOnly12345",
   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "vedant-portfolio.firebaseapp.com",
@@ -35,12 +35,10 @@ export async function sendContactMessage(msg: Omit<ContactMessage, 'timestamp'>)
       read: false
     };
     
-    // Save to Firestore if connected
-    if (import.meta.env.VITE_FIREBASE_API_KEY) {
+    if (import.meta.env.VITE_FIREBASE_API_KEY && import.meta.env.VITE_FIREBASE_PROJECT_ID !== 'vedant-portfolio') {
       const docRef = await addDoc(collection(db, 'contact_messages'), fullMsg);
       return { success: true, id: docRef.id };
     } else {
-      // Local storage fallback when running without backend env keys
       const existing = JSON.parse(localStorage.getItem('contact_messages') || '[]');
       const newMsg = { ...fullMsg, id: 'msg_' + Date.now() };
       existing.unshift(newMsg);
@@ -48,11 +46,37 @@ export async function sendContactMessage(msg: Omit<ContactMessage, 'timestamp'>)
       return { success: true, id: newMsg.id };
     }
   } catch (error) {
-    console.warn('Backend message save fallback to localStorage:', error);
+    console.warn('Message save fallback to localStorage:', error);
     const existing = JSON.parse(localStorage.getItem('contact_messages') || '[]');
     const newMsg = { ...msg, timestamp: new Date().toISOString(), read: false, id: 'msg_' + Date.now() };
     existing.unshift(newMsg);
     localStorage.setItem('contact_messages', JSON.stringify(existing));
     return { success: true, id: newMsg.id };
   }
+}
+
+// Cloud Persistence helper for cross-domain CMS syncing
+export async function savePortfolioCloud(data: any) {
+  try {
+    if (import.meta.env.VITE_FIREBASE_API_KEY && import.meta.env.VITE_FIREBASE_PROJECT_ID !== 'vedant-portfolio') {
+      await setDoc(doc(db, 'portfolio', 'live_content'), data, { merge: true });
+    }
+  } catch (e) {
+    console.warn('Cloud sync note:', e);
+  }
+}
+
+export function subscribePortfolioCloud(callback: (data: any) => void) {
+  try {
+    if (import.meta.env.VITE_FIREBASE_API_KEY && import.meta.env.VITE_FIREBASE_PROJECT_ID !== 'vedant-portfolio') {
+      return onSnapshot(doc(db, 'portfolio', 'live_content'), (snapshot) => {
+        if (snapshot.exists()) {
+          callback(snapshot.data());
+        }
+      });
+    }
+  } catch (e) {
+    console.warn('Cloud snapshot note:', e);
+  }
+  return () => {};
 }

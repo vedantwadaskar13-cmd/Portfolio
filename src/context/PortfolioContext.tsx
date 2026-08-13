@@ -1,5 +1,6 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import { RESUME_DATA, ProjectItem, ExperienceItem, SkillCategory } from '../data/resumeData';
+import { savePortfolioCloud, subscribePortfolioCloud } from '../services/firebase';
 
 export interface PersonalInfo {
   name: string;
@@ -55,24 +56,95 @@ export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     return saved ? JSON.parse(saved) : RESUME_DATA.skills;
   });
 
+  // Cross-tab BroadcastChannel for real-time synchronization
+  useEffect(() => {
+    let bc: BroadcastChannel | null = null;
+    if (typeof BroadcastChannel !== 'undefined') {
+      bc = new BroadcastChannel('portfolio_sync_channel');
+      bc.onmessage = (event) => {
+        if (event.data?.type === 'UPDATE_ALL') {
+          if (event.data.personal) setPersonal(event.data.personal);
+          if (event.data.projects) setProjects(event.data.projects);
+          if (event.data.experience) setExperience(event.data.experience);
+          if (event.data.skills) setSkills(event.data.skills);
+        }
+      };
+    }
+
+    const handleStorage = (e: StorageEvent) => {
+      if (e.key === STORAGE_KEY_PERSONAL && e.newValue) setPersonal(JSON.parse(e.newValue));
+      if (e.key === STORAGE_KEY_PROJECTS && e.newValue) setProjects(JSON.parse(e.newValue));
+      if (e.key === STORAGE_KEY_EXPERIENCE && e.newValue) setExperience(JSON.parse(e.newValue));
+      if (e.key === STORAGE_KEY_SKILLS && e.newValue) setSkills(JSON.parse(e.newValue));
+    };
+
+    window.addEventListener('storage', handleStorage);
+
+    // Subscribe to Cloud Firestore updates if connected
+    const unsubscribeCloud = subscribePortfolioCloud((cloudData) => {
+      if (cloudData.personal) {
+        setPersonal(cloudData.personal);
+        localStorage.setItem(STORAGE_KEY_PERSONAL, JSON.stringify(cloudData.personal));
+      }
+      if (cloudData.projects) {
+        setProjects(cloudData.projects);
+        localStorage.setItem(STORAGE_KEY_PROJECTS, JSON.stringify(cloudData.projects));
+      }
+      if (cloudData.experience) {
+        setExperience(cloudData.experience);
+        localStorage.setItem(STORAGE_KEY_EXPERIENCE, JSON.stringify(cloudData.experience));
+      }
+      if (cloudData.skills) {
+        setSkills(cloudData.skills);
+        localStorage.setItem(STORAGE_KEY_SKILLS, JSON.stringify(cloudData.skills));
+      }
+    });
+
+    return () => {
+      if (bc) bc.close();
+      window.removeEventListener('storage', handleStorage);
+      unsubscribeCloud();
+    };
+  }, []);
+
+  const broadcastUpdate = (type: string, data: any) => {
+    if (typeof BroadcastChannel !== 'undefined') {
+      try {
+        const bc = new BroadcastChannel('portfolio_sync_channel');
+        bc.postMessage({ type: 'UPDATE_ALL', ...data });
+        bc.close();
+      } catch (e) {
+        // ignore
+      }
+    }
+  };
+
   const updatePersonal = (newPersonal: PersonalInfo) => {
     setPersonal(newPersonal);
     localStorage.setItem(STORAGE_KEY_PERSONAL, JSON.stringify(newPersonal));
+    savePortfolioCloud({ personal: newPersonal });
+    broadcastUpdate('PERSONAL', { personal: newPersonal });
   };
 
   const saveProjects = (newProjects: ProjectItem[]) => {
     setProjects(newProjects);
     localStorage.setItem(STORAGE_KEY_PROJECTS, JSON.stringify(newProjects));
+    savePortfolioCloud({ projects: newProjects });
+    broadcastUpdate('PROJECTS', { projects: newProjects });
   };
 
   const saveExperience = (newExperience: ExperienceItem[]) => {
     setExperience(newExperience);
     localStorage.setItem(STORAGE_KEY_EXPERIENCE, JSON.stringify(newExperience));
+    savePortfolioCloud({ experience: newExperience });
+    broadcastUpdate('EXPERIENCE', { experience: newExperience });
   };
 
   const saveSkills = (newSkills: SkillCategory[]) => {
     setSkills(newSkills);
     localStorage.setItem(STORAGE_KEY_SKILLS, JSON.stringify(newSkills));
+    savePortfolioCloud({ skills: newSkills });
+    broadcastUpdate('SKILLS', { skills: newSkills });
   };
 
   return (
