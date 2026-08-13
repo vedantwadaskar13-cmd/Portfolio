@@ -1,10 +1,11 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { Cpu, Brain, Database, Wrench, Award, Compass, Code, Layers } from 'lucide-react';
-import { RESUME_DATA } from '../data/resumeData';
+import { usePortfolio } from '../context/PortfolioContext';
 
 export const AboutSection: React.FC = () => {
-  const { summary, academicFocus } = RESUME_DATA.personal;
+  const { personal, projects } = usePortfolio();
+  const { summary, academicFocus } = personal;
 
   const coreFocusAreas = [
     {
@@ -98,7 +99,9 @@ export const AboutSection: React.FC = () => {
                 <Brain className="w-8 h-8" />
               </div>
               <div>
-                <div className="font-display font-extrabold text-3xl text-white">02</div>
+                <div className="font-display font-extrabold text-3xl text-white">
+                  {String(projects.length).padStart(2, '0')}
+                </div>
                 <div className="font-mono text-xs text-slate-400 uppercase tracking-wider">Major AI Systems Built</div>
               </div>
             </div>

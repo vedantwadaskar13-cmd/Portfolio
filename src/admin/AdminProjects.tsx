@@ -1,19 +1,23 @@
 import React, { useState } from 'react';
-import { Plus, Edit2, Trash2, CheckCircle2, FolderGit2, X } from 'lucide-react';
-import { RESUME_DATA, ProjectItem } from '../data/resumeData';
+import { Plus, Edit2, Trash2, X } from 'lucide-react';
+import { usePortfolio } from '../context/PortfolioContext';
+import { ProjectItem } from '../data/resumeData';
 
 export const AdminProjects: React.FC = () => {
-  const [projectsList, setProjectsList] = useState<ProjectItem[]>(RESUME_DATA.projects);
+  const { projects, saveProjects } = usePortfolio();
   const [editingProject, setEditingProject] = useState<Partial<ProjectItem> | null>(null);
   const [isCreating, setIsCreating] = useState(false);
 
   const handleDelete = (id: string) => {
-    setProjectsList(projectsList.filter(p => p.id !== id));
+    const updated = projects.filter(p => p.id !== id);
+    saveProjects(updated);
   };
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingProject?.title) return;
+
+    let updatedList: ProjectItem[];
 
     if (isCreating) {
       const newProj: ProjectItem = {
@@ -22,20 +26,37 @@ export const AdminProjects: React.FC = () => {
         subtitle: editingProject.subtitle || '',
         category: (editingProject.category as any) || 'AI/ML',
         image: editingProject.image || '/assets/images/safar.jpg',
-        techStack: editingProject.techStack || ['Python', 'FastAPI'],
+        techStack: typeof editingProject.techStack === 'string'
+          ? (editingProject.techStack as string).split(',').map(s => s.trim()).filter(Boolean)
+          : editingProject.techStack || ['Python', 'FastAPI'],
         summary: editingProject.summary || '',
-        highlights: editingProject.highlights || ['Built model workflow.'],
+        highlights: typeof editingProject.highlights === 'string'
+          ? (editingProject.highlights as string).split('\n').filter(Boolean)
+          : editingProject.highlights || ['Built model workflow.'],
         githubUrl: editingProject.githubUrl || 'https://github.com/vedantwadaskar13-cmd',
         liveUrl: '#',
         featured: true,
       };
-      setProjectsList([newProj, ...projectsList]);
+      updatedList = [newProj, ...projects];
     } else {
-      setProjectsList(
-        projectsList.map(p => (p.id === editingProject.id ? ({ ...p, ...editingProject } as ProjectItem) : p))
-      );
+      updatedList = projects.map(p => {
+        if (p.id === editingProject.id) {
+          return {
+            ...p,
+            ...editingProject,
+            techStack: typeof editingProject.techStack === 'string'
+              ? (editingProject.techStack as string).split(',').map(s => s.trim()).filter(Boolean)
+              : editingProject.techStack || p.techStack,
+            highlights: typeof editingProject.highlights === 'string'
+              ? (editingProject.highlights as string).split('\n').filter(Boolean)
+              : editingProject.highlights || p.highlights,
+          } as ProjectItem;
+        }
+        return p;
+      });
     }
 
+    saveProjects(updatedList);
     setEditingProject(null);
     setIsCreating(false);
   };
@@ -54,7 +75,7 @@ export const AdminProjects: React.FC = () => {
               title: '',
               subtitle: '',
               category: 'AI/ML',
-              techStack: ['Python'],
+              techStack: ['Python', 'FastAPI'],
               summary: '',
               highlights: ['Feature implementation details.'],
             });
@@ -108,6 +129,26 @@ export const AdminProjects: React.FC = () => {
             />
           </div>
 
+          <div>
+            <label className="block text-slate-400 mb-1">HIGHLIGHTS (one per line):</label>
+            <textarea
+              rows={3}
+              value={Array.isArray(editingProject.highlights) ? editingProject.highlights.join('\n') : editingProject.highlights || ''}
+              onChange={e => setEditingProject({ ...editingProject, highlights: e.target.value as any })}
+              className="w-full p-2.5 rounded-xl bg-slate-900 border border-slate-800 text-white resize-none"
+            />
+          </div>
+
+          <div>
+            <label className="block text-slate-400 mb-1">TECH STACK (comma separated):</label>
+            <input
+              type="text"
+              value={Array.isArray(editingProject.techStack) ? editingProject.techStack.join(', ') : editingProject.techStack || ''}
+              onChange={e => setEditingProject({ ...editingProject, techStack: e.target.value as any })}
+              className="w-full p-2.5 rounded-xl bg-slate-900 border border-slate-800 text-white"
+            />
+          </div>
+
           <div className="flex justify-end gap-3 pt-2">
             <button
               type="button"
@@ -120,7 +161,7 @@ export const AdminProjects: React.FC = () => {
               type="submit"
               className="px-4 py-2 rounded-xl bg-purple-600 text-white font-bold"
             >
-              SAVE CHANGES
+              SAVE PROJECT
             </button>
           </div>
         </form>
@@ -128,7 +169,7 @@ export const AdminProjects: React.FC = () => {
 
       {/* Projects List */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {projectsList.map(proj => (
+        {projects.map(proj => (
           <div key={proj.id} className="p-6 rounded-2xl glass-hud border border-slate-800 space-y-3">
             <div className="flex items-start justify-between">
               <div>

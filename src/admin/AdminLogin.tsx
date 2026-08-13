@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Lock, Key, ShieldCheck, ArrowLeft, Sparkles, AlertCircle } from 'lucide-react';
+import { Lock, Key, ShieldCheck, ArrowLeft, AlertCircle } from 'lucide-react';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../services/firebase';
 
@@ -8,6 +8,23 @@ interface AdminLoginProps {
   onLoginSuccess: (user: any) => void;
   onExit: () => void;
 }
+
+export const ADMIN_CREDS_KEY = 'vedant_admin_credentials';
+
+export const getAdminCreds = () => {
+  const saved = localStorage.getItem(ADMIN_CREDS_KEY);
+  if (saved) {
+    try {
+      return JSON.parse(saved);
+    } catch {
+      // fallback
+    }
+  }
+  return {
+    email: import.meta.env.VITE_ADMIN_EMAIL || 'vedantwadaskar13@gmail.com',
+    password: import.meta.env.VITE_ADMIN_PASSWORD || 'Vedant@2027#AI',
+  };
+};
 
 export const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess, onExit }) => {
   const [email, setEmail] = useState('');
@@ -20,29 +37,28 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess, onExit }
     setLoading(true);
     setError('');
 
+    const targetCreds = getAdminCreds();
+    const inputEmail = email.trim().toLowerCase();
+    const expectedEmail = targetCreds.email.trim().toLowerCase();
+
     try {
-      if (import.meta.env.VITE_FIREBASE_API_KEY) {
+      if (import.meta.env.VITE_FIREBASE_API_KEY && import.meta.env.VITE_FIREBASE_PROJECT_ID !== 'vedant-portfolio') {
         const userCredential = await signInWithEmailAndPassword(auth, email, password);
         onLoginSuccess(userCredential.user);
+        return;
+      }
+
+      // Strict Authentication Verification against authorized Admin Credentials
+      if (inputEmail === expectedEmail && password === targetCreds.password) {
+        onLoginSuccess({ email: targetCreds.email, uid: 'admin_vedant_verified' });
       } else {
-        // Fallback local admin sign-in mode for testing
-        if (password.length >= 4) {
-          onLoginSuccess({ email: email || 'admin@vedant.ai', uid: 'admin_local_123' });
-        } else {
-          setError('Password must be at least 4 characters for local admin access.');
-        }
+        setError('ACCESS DENIED: Invalid Admin ID or Password. Only authorized credentials permitted.');
       }
     } catch (err: any) {
-      console.warn('Firebase Auth Login note:', err);
-      // Fallback local demo login
-      onLoginSuccess({ email: email || 'admin@vedant.ai', uid: 'admin_local_123' });
+      setError('ACCESS DENIED: Authentication failed. Please check your credentials.');
     } finally {
       setLoading(false);
     }
-  };
-
-  const handleQuickDemoAccess = () => {
-    onLoginSuccess({ email: 'admin@vedant.ai', uid: 'admin_local_123' });
   };
 
   return (
@@ -55,31 +71,31 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess, onExit }
         {/* Header */}
         <div className="text-center space-y-2">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/15 border border-purple-400/40 text-purple-300 font-mono text-xs">
-            <ShieldCheck className="w-4 h-4" />
-            <span>AUTHENTICATED ACCESS ONLY</span>
+            <ShieldCheck className="w-4 h-4 text-emerald-400" />
+            <span>PROTECTED ADMIN SECURITY</span>
           </div>
           <h2 className="font-display font-extrabold text-2xl text-white">PORTFOLIO CONTROL CENTER</h2>
           <p className="font-mono text-xs text-slate-400">
-            Authorized administrator portal for Vedant Wadaskar.
+            Strict authentication required. Authorized owner access only.
           </p>
         </div>
 
         {error && (
-          <div className="p-3 rounded-xl bg-red-950/40 border border-red-500/40 text-red-300 text-xs font-mono flex items-center gap-2">
-            <AlertCircle className="w-4 h-4 shrink-0" />
+          <div className="p-3.5 rounded-xl bg-red-950/60 border border-red-500/50 text-red-300 text-xs font-mono flex items-start gap-2.5">
+            <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
             <span>{error}</span>
           </div>
         )}
 
         <form onSubmit={handleLogin} className="space-y-4 font-mono text-xs">
           <div>
-            <label className="block text-slate-400 mb-1">ADMIN EMAIL:</label>
+            <label className="block text-slate-400 mb-1">ADMIN EMAIL / ID:</label>
             <div className="relative">
               <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
               <input
                 type="email"
                 required
-                placeholder="admin@vedant.ai"
+                placeholder="vedantwadaskar13@gmail.com"
                 value={email}
                 onChange={e => setEmail(e.target.value)}
                 className="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-900 border border-slate-800 text-slate-100 focus:outline-none focus:border-purple-400"
@@ -94,7 +110,7 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess, onExit }
               <input
                 type="password"
                 required
-                placeholder="••••••••"
+                placeholder="Enter password..."
                 value={password}
                 onChange={e => setPassword(e.target.value)}
                 className="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-900 border border-slate-800 text-slate-100 focus:outline-none focus:border-purple-400"
@@ -105,25 +121,16 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess, onExit }
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3.5 rounded-xl bg-gradient-to-r from-purple-600 to-cyan-500 text-white font-mono font-bold text-xs uppercase tracking-wider shadow-neon-purple hover:scale-[1.02] transition-all"
+            className="w-full py-3.5 rounded-xl bg-gradient-to-r from-purple-600 to-cyan-500 text-white font-mono font-bold text-xs uppercase tracking-wider shadow-neon-purple hover:scale-[1.02] transition-all disabled:opacity-50"
           >
-            {loading ? 'AUTHENTICATING...' : 'AUTHENTICATE & ENTER CMS'}
+            {loading ? 'VERIFYING CREDENTIALS...' : 'VERIFY & ENTER CMS'}
           </button>
         </form>
 
-        {/* Quick Demo Bypass for local evaluation */}
-        <div className="pt-4 border-t border-slate-800 space-y-3">
-          <button
-            onClick={handleQuickDemoAccess}
-            className="w-full py-2.5 rounded-xl bg-slate-900 border border-purple-500/30 text-purple-300 font-mono text-xs hover:bg-purple-500/20 transition-all flex items-center justify-center gap-2"
-          >
-            <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
-            <span>ONE-CLICK LOCAL DEMO ADMIN LOGIN</span>
-          </button>
-
+        <div className="pt-4 border-t border-slate-800 flex justify-center">
           <button
             onClick={onExit}
-            className="w-full text-center text-slate-400 hover:text-white font-mono text-xs flex items-center justify-center gap-1"
+            className="text-slate-400 hover:text-white font-mono text-xs flex items-center justify-center gap-1.5"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
             <span>Return to Public Website</span>

@@ -1,9 +1,11 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Briefcase, Calendar, MapPin, CheckCircle2, ChevronRight, Cpu } from 'lucide-react';
-import { RESUME_DATA } from '../data/resumeData';
+import { Briefcase, Calendar, MapPin, ChevronRight } from 'lucide-react';
+import { usePortfolio } from '../context/PortfolioContext';
 
 export const ExperienceTelemetry: React.FC = () => {
+  const { experience } = usePortfolio();
+
   return (
     <section id="experience" className="relative py-28 overflow-hidden bg-slate-950/40">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
@@ -28,7 +30,7 @@ export const ExperienceTelemetry: React.FC = () => {
           <div className="absolute left-4 sm:left-1/2 top-0 bottom-0 w-0.5 bg-gradient-to-b from-cyan-500 via-emerald-400 to-purple-500 opacity-40 sm:-translate-x-1/2" />
 
           <div className="space-y-12">
-            {RESUME_DATA.experience.map((exp, idx) => {
+            {experience.map((exp, idx) => {
               const isEven = idx % 2 === 0;
               return (
                 <motion.div

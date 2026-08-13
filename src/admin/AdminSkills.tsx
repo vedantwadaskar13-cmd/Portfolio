@@ -1,11 +1,12 @@
 import React, { useState } from 'react';
-import { Cpu, Plus, Trash2, Edit2, X } from 'lucide-react';
-import { RESUME_DATA, SkillCategory } from '../data/resumeData';
+import { Cpu, Plus, Trash2, X } from 'lucide-react';
+import { usePortfolio } from '../context/PortfolioContext';
+import { SkillCategory } from '../data/resumeData';
 
 export const AdminSkills: React.FC = () => {
-  const [skillCategories, setSkillCategories] = useState<SkillCategory[]>(RESUME_DATA.skills);
+  const { skills, saveSkills } = usePortfolio();
   const [isAdding, setIsAdding] = useState(false);
-  const [newCategory, setNewCategory] = useState(RESUME_DATA.skills[0].category);
+  const [newCategory, setNewCategory] = useState(skills[0]?.category || 'ML & Artificial Intelligence');
   const [newSkillName, setNewSkillName] = useState('');
   const [newSkillLevel, setNewSkillLevel] = useState<'Expert' | 'Advanced' | 'Intermediate'>('Advanced');
   const [newSkillTags, setNewSkillTags] = useState('');
@@ -16,7 +17,7 @@ export const AdminSkills: React.FC = () => {
 
     const tagsArr = newSkillTags.split(',').map(t => t.trim()).filter(Boolean);
 
-    const updated = skillCategories.map(cat => {
+    const updated = skills.map(cat => {
       if (cat.category === newCategory) {
         return {
           ...cat,
@@ -26,14 +27,14 @@ export const AdminSkills: React.FC = () => {
       return cat;
     });
 
-    setSkillCategories(updated);
+    saveSkills(updated);
     setNewSkillName('');
     setNewSkillTags('');
     setIsAdding(false);
   };
 
   const handleDeleteSkill = (catName: string, skillName: string) => {
-    const updated = skillCategories.map(cat => {
+    const updated = skills.map(cat => {
       if (cat.category === catName) {
         return {
           ...cat,
@@ -42,7 +43,7 @@ export const AdminSkills: React.FC = () => {
       }
       return cat;
     });
-    setSkillCategories(updated);
+    saveSkills(updated);
   };
 
   return (
@@ -91,7 +92,7 @@ export const AdminSkills: React.FC = () => {
                 onChange={e => setNewCategory(e.target.value)}
                 className="w-full p-2.5 rounded-xl bg-slate-900 border border-slate-800 text-white"
               >
-                {skillCategories.map((c, idx) => (
+                {skills.map((c, idx) => (
                   <option key={idx} value={c.category}>{c.category}</option>
                 ))}
               </select>
@@ -142,7 +143,7 @@ export const AdminSkills: React.FC = () => {
 
       {/* Skill Categories Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {skillCategories.map((cat, idx) => (
+        {skills.map((cat, idx) => (
           <div key={idx} className="p-6 rounded-2xl glass-hud border border-slate-800 space-y-4">
             <div className="flex items-center justify-between font-mono">
               <h3 className="font-bold text-cyan-400 text-sm">{cat.category}</h3>

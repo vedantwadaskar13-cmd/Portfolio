@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { PortfolioProvider } from './context/PortfolioContext';
 import { CustomCursor } from './components/CustomCursor';
 import { CyberBackground } from './components/CyberBackground';
 import { Navbar } from './components/Navbar';
@@ -22,18 +23,42 @@ import { AdminSkills } from './admin/AdminSkills';
 import { auth } from './services/firebase';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
 
-export const App: React.FC = () => {
+const AppContent: React.FC = () => {
   const [resumeOpen, setResumeOpen] = useState(false);
   const [cliOpen, setCliOpen] = useState(false);
   const [isAdminMode, setIsAdminMode] = useState(false);
   const [adminUser, setAdminUser] = useState<any>(null);
   const [adminTab, setAdminTab] = useState<'dashboard' | 'profile' | 'projects' | 'experience' | 'skills'>('dashboard');
 
+  const checkAdminRoute = () => {
+    const hostname = window.location.hostname.toLowerCase();
+    const pathname = window.location.pathname.toLowerCase();
+    const hash = window.location.hash.toLowerCase();
+    const search = window.location.search.toLowerCase();
+
+    return (
+      hostname.includes('admin') ||
+      pathname.includes('/admin') ||
+      hash.includes('admin') ||
+      search.includes('admin')
+    );
+  };
+
   useEffect(() => {
-    // Check path for /admin
-    if (window.location.pathname === '/admin' || window.location.hash === '#admin') {
+    if (checkAdminRoute()) {
       setIsAdminMode(true);
     }
+
+    const handlePopState = () => {
+      if (checkAdminRoute()) {
+        setIsAdminMode(true);
+      } else {
+        setIsAdminMode(false);
+      }
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    window.addEventListener('hashchange', handlePopState);
 
     const unsubscribe = onAuthStateChanged(auth, user => {
       if (user) {
@@ -41,22 +66,36 @@ export const App: React.FC = () => {
       }
     });
 
-    return () => unsubscribe();
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+      window.removeEventListener('hashchange', handlePopState);
+      unsubscribe();
+    };
   }, []);
+
+  const openAdminPortal = () => {
+    setIsAdminMode(true);
+    window.history.pushState({}, '', '/admin');
+  };
+
+  const closeAdminPortal = () => {
+    setIsAdminMode(false);
+    window.history.pushState({}, '', '/');
+  };
 
   const handleLogoutAdmin = () => {
     signOut(auth).catch(() => {});
     setAdminUser(null);
-    setIsAdminMode(false);
-    window.location.hash = '';
+    closeAdminPortal();
   };
 
+  // Render Protected Admin Control Center experience
   if (isAdminMode) {
     if (!adminUser) {
       return (
         <AdminLogin
           onLoginSuccess={user => setAdminUser(user)}
-          onExit={() => setIsAdminMode(false)}
+          onExit={closeAdminPortal}
         />
       );
     }
@@ -66,7 +105,7 @@ export const App: React.FC = () => {
         user={adminUser}
         activeTab={adminTab}
         onTabChange={tab => setAdminTab(tab)}
-        onExit={() => setIsAdminMode(false)}
+        onExit={closeAdminPortal}
         onLogout={handleLogoutAdmin}
       >
         {adminTab === 'dashboard' && <AdminDashboard />}
@@ -78,6 +117,7 @@ export const App: React.FC = () => {
     );
   }
 
+  // Render Public Portfolio experience
   return (
     <div className="relative min-h-screen bg-[#030712] text-slate-100 selection:bg-cyan-500 selection:text-black font-sans">
       {/* HUD Reticle Cursor */}
@@ -90,7 +130,7 @@ export const App: React.FC = () => {
       <Navbar
         onOpenResume={() => setResumeOpen(true)}
         onOpenCLI={() => setCliOpen(true)}
-        onOpenAdmin={() => setIsAdminMode(true)}
+        onOpenAdmin={openAdminPortal}
       />
 
       {/* Page Sections */}
@@ -124,5 +164,11 @@ export const App: React.FC = () => {
     </div>
   );
 };
+
+export const App: React.FC = () => (
+  <PortfolioProvider>
+    <AppContent />
+  </PortfolioProvider>
+);
 
 export default App;

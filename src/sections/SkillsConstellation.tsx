@@ -1,16 +1,17 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Brain, BarChart3, Cpu, Code, Wrench, Search, Shield, Filter } from 'lucide-react';
-import { RESUME_DATA, SkillCategory } from '../data/resumeData';
+import { Cpu, Search } from 'lucide-react';
+import { usePortfolio } from '../context/PortfolioContext';
 
 export const SkillsConstellation: React.FC = () => {
+  const { skills } = usePortfolio();
   const [activeCategory, setActiveCategory] = useState<string>('ALL');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [selectedSkill, setSelectedSkill] = useState<{ name: string; level: string; tags: string[]; category: string } | null>(null);
 
-  const categories = ['ALL', ...RESUME_DATA.skills.map(s => s.category)];
+  const categories = ['ALL', ...skills.map(s => s.category)];
 
-  const allSkillsList = RESUME_DATA.skills.flatMap(cat =>
+  const allSkillsList = skills.flatMap(cat =>
     cat.skills.map(skill => ({
       ...skill,
       category: cat.category,
@@ -39,7 +40,7 @@ export const SkillsConstellation: React.FC = () => {
             SKILLS & <span className="bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 via-emerald-400 to-purple-400">TECHNOLOGY CONSTELLATION</span>
           </h2>
           <p className="text-slate-400 text-sm max-w-xl font-mono">
-            Ground-up technical competencies extracted strictly from verified resume experience and CAD engineering domain expertise.
+            Technical competencies extracted strictly from verified experience and CAD engineering domain expertise.
           </p>
         </div>
 
@@ -144,7 +145,7 @@ export const SkillsConstellation: React.FC = () => {
                 </span>
               </div>
               <p className="text-slate-300 text-xs font-mono">
-                Category: <span className="text-cyan-400">{selectedSkill.category}</span> — Verified in Resume Projects & Workflows.
+                Category: <span className="text-cyan-400">{selectedSkill.category}</span>
               </p>
             </div>
             <button

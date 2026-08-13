@@ -1,19 +1,23 @@
 import React, { useState } from 'react';
-import { Briefcase, Plus, Trash2, Edit2, X } from 'lucide-react';
-import { RESUME_DATA, ExperienceItem } from '../data/resumeData';
+import { Plus, Trash2, Edit2, X } from 'lucide-react';
+import { usePortfolio } from '../context/PortfolioContext';
+import { ExperienceItem } from '../data/resumeData';
 
 export const AdminExperience: React.FC = () => {
-  const [expList, setExpList] = useState<ExperienceItem[]>(RESUME_DATA.experience);
+  const { experience, saveExperience } = usePortfolio();
   const [editingExp, setEditingExp] = useState<Partial<ExperienceItem> | null>(null);
   const [isCreating, setIsCreating] = useState(false);
 
   const handleDelete = (id: string) => {
-    setExpList(expList.filter(e => e.id !== id));
+    const updated = experience.filter(e => e.id !== id);
+    saveExperience(updated);
   };
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingExp?.role || !editingExp?.company) return;
+
+    let updatedList: ExperienceItem[];
 
     if (isCreating) {
       const newExp: ExperienceItem = {
@@ -30,27 +34,26 @@ export const AdminExperience: React.FC = () => {
           ? (editingExp.skillsUsed as string).split(',').map(s => s.trim()).filter(Boolean)
           : editingExp.skillsUsed || ['Python', 'AI/ML']
       };
-      setExpList([newExp, ...expList]);
+      updatedList = [newExp, ...experience];
     } else {
-      setExpList(
-        expList.map(item => {
-          if (item.id === editingExp.id) {
-            return {
-              ...item,
-              ...editingExp,
-              description: typeof editingExp.description === 'string'
-                ? (editingExp.description as string).split('\n').filter(Boolean)
-                : editingExp.description || item.description,
-              skillsUsed: typeof editingExp.skillsUsed === 'string'
-                ? (editingExp.skillsUsed as string).split(',').map(s => s.trim()).filter(Boolean)
-                : editingExp.skillsUsed || item.skillsUsed
-            } as ExperienceItem;
-          }
-          return item;
-        })
-      );
+      updatedList = experience.map(item => {
+        if (item.id === editingExp.id) {
+          return {
+            ...item,
+            ...editingExp,
+            description: typeof editingExp.description === 'string'
+              ? (editingExp.description as string).split('\n').filter(Boolean)
+              : editingExp.description || item.description,
+            skillsUsed: typeof editingExp.skillsUsed === 'string'
+              ? (editingExp.skillsUsed as string).split(',').map(s => s.trim()).filter(Boolean)
+              : editingExp.skillsUsed || item.skillsUsed
+          } as ExperienceItem;
+        }
+        return item;
+      });
     }
 
+    saveExperience(updatedList);
     setEditingExp(null);
     setIsCreating(false);
   };
@@ -188,7 +191,7 @@ export const AdminExperience: React.FC = () => {
 
       {/* List */}
       <div className="space-y-4">
-        {expList.map(exp => (
+        {experience.map(exp => (
           <div key={exp.id} className="p-6 rounded-2xl glass-hud border border-slate-800 flex items-start justify-between">
             <div className="space-y-1 flex-1">
               <div className="font-display font-bold text-lg text-white">{exp.role} — <span className="text-purple-400">{exp.company}</span></div>

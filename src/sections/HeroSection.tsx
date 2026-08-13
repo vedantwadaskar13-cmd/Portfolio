@@ -1,7 +1,7 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { ArrowRight, Terminal, Sparkles, MapPin, Mail, Github, Linkedin, ShieldCheck } from 'lucide-react';
-import { RESUME_DATA } from '../data/resumeData';
+import { usePortfolio } from '../context/PortfolioContext';
 import { Hero3DCanvas } from '../components/Hero3DCanvas';
 
 interface HeroSectionProps {
@@ -10,7 +10,8 @@ interface HeroSectionProps {
 }
 
 export const HeroSection: React.FC<HeroSectionProps> = ({ onOpenResume, onOpenCLI }) => {
-  const { name, title, tagline, location, email, github, linkedin } = RESUME_DATA.personal;
+  const { personal } = usePortfolio();
+  const { name, title, tagline, location, email, github, linkedin } = personal;
 
   return (
     <section id="hero" className="relative min-h-screen pt-32 pb-20 flex items-center justify-center overflow-hidden">
@@ -37,7 +38,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onOpenResume, onOpenCL
               <h1 className="font-display font-extrabold text-4xl sm:text-6xl lg:text-7xl tracking-tight text-white leading-none">
                 <span className="block text-slate-100">{name.split(' ')[0]}</span>
                 <span className="block bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 via-emerald-400 to-purple-500 glow-text-cyan">
-                  {name.split(' ')[1]}
+                  {name.split(' ').slice(1).join(' ')}
                 </span>
               </h1>
               <p className="font-mono text-cyan-400/90 text-sm sm:text-base tracking-wide flex items-center gap-2">
@@ -48,7 +49,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onOpenResume, onOpenCL
 
             {/* Tagline Bio Summary */}
             <p className="text-slate-300 text-base sm:text-lg max-w-2xl leading-relaxed font-sans">
-              Building machine learning models, conversational AI agents, and full-stack data-driven applications. Combining mechanical engineering fundamentals with advanced AI/ML models & SQL analytics.
+              {tagline || "Building machine learning models, conversational AI agents, and full-stack data-driven applications."}
             </p>
 
             {/* Quick Resume Metadata Telemetry */}
@@ -57,7 +58,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onOpenResume, onOpenCL
                 <span className="text-slate-500 text-[10px]">LOCATION</span>
                 <span className="text-slate-200 font-medium flex items-center gap-1.5 mt-0.5">
                   <MapPin className="w-3.5 h-3.5 text-cyan-400" />
-                  <span>Pune, India</span>
+                  <span>{location}</span>
                 </span>
               </div>
               <div className="p-3.5 px-5 rounded-xl glass-hud border border-cyan-500/20 flex flex-col">

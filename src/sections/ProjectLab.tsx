@@ -1,16 +1,18 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Rocket, ExternalLink, Github, ArrowUpRight, Terminal, Layers } from 'lucide-react';
-import { RESUME_DATA, ProjectItem } from '../data/resumeData';
+import { Rocket, ArrowUpRight } from 'lucide-react';
+import { usePortfolio } from '../context/PortfolioContext';
+import { ProjectItem } from '../data/resumeData';
 import { ProjectModal } from '../components/ProjectModal';
 
 export const ProjectLab: React.FC = () => {
+  const { projects } = usePortfolio();
   const [activeCategory, setActiveCategory] = useState<string>('ALL');
   const [selectedProject, setSelectedProject] = useState<ProjectItem | null>(null);
 
-  const categories = ['ALL', 'AI/ML', 'Robotics & CAD'];
+  const categories = ['ALL', ...Array.from(new Set(projects.map(p => p.category)))];
 
-  const filteredProjects = RESUME_DATA.projects.filter(
+  const filteredProjects = projects.filter(
     proj => activeCategory === 'ALL' || proj.category === activeCategory
   );
 
@@ -64,7 +66,7 @@ export const ProjectLab: React.FC = () => {
                 className="group relative rounded-2xl glass-hud border border-cyan-500/30 overflow-hidden cursor-pointer flex flex-col justify-between glass-hud-hover hud-corner-box interactive-hover"
               >
                 {/* Image Showcase Header */}
-                <div className="relative h-56 overflow-hidden">
+                <div className="relative h-56 overflow-hidden bg-slate-900">
                   <img
                     src={project.image}
                     alt={project.title}
