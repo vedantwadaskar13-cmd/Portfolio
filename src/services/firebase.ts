@@ -2,14 +2,14 @@ import { initializeApp, getApps, getApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { getFirestore, collection, addDoc, doc, setDoc, onSnapshot, getDocs, query, orderBy } from 'firebase/firestore';
 
-// Default Firebase Configuration
+// Default Firebase Configuration (reads securely from environment variables)
 export const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyDBq1dEc3RmCQKMyjr2IoTg5NhYkDDyx3E",
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "portfolio-a7b3f.firebaseapp.com",
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "portfolio-a7b3f",
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "portfolio-a7b3f.appspot.com",
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "1234567890",
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:1234567890:web:abcdef123456"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "",
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "",
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "",
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "",
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "",
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || ""
 };
 
 // Initialize Firebase safely
