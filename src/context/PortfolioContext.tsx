@@ -32,52 +32,37 @@ interface PortfolioContextType {
 
 const PortfolioContext = createContext<PortfolioContextType | undefined>(undefined);
 
-const STORAGE_KEY_GLOBAL = 'vedant_portfolio_global_data_v1';
+const STORAGE_KEY_GLOBAL_V2 = 'vedant_portfolio_global_data_v2';
+const STORAGE_KEY_GLOBAL_V1 = 'vedant_portfolio_global_data_v1';
+
+const getInitialData = () => {
+  const saved = localStorage.getItem(STORAGE_KEY_GLOBAL_V2) || localStorage.getItem(STORAGE_KEY_GLOBAL_V1);
+  if (saved) {
+    try {
+      return JSON.parse(saved);
+    } catch (e) {}
+  }
+  return null;
+};
 
 export const PortfolioProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [personal, setPersonal] = useState<PersonalInfo>(() => {
-    const saved = localStorage.getItem(STORAGE_KEY_GLOBAL);
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        if (parsed.personal) return parsed.personal;
-      } catch (e) {}
-    }
-    return RESUME_DATA.personal;
-  });
+  const initialData = getInitialData();
 
-  const [projects, setProjects] = useState<ProjectItem[]>(() => {
-    const saved = localStorage.getItem(STORAGE_KEY_GLOBAL);
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        if (parsed.projects) return parsed.projects;
-      } catch (e) {}
-    }
-    return RESUME_DATA.projects;
-  });
+  const [personal, setPersonal] = useState<PersonalInfo>(
+    initialData?.personal || RESUME_DATA.personal
+  );
 
-  const [experience, setExperience] = useState<ExperienceItem[]>(() => {
-    const saved = localStorage.getItem(STORAGE_KEY_GLOBAL);
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        if (parsed.experience) return parsed.experience;
-      } catch (e) {}
-    }
-    return RESUME_DATA.experience;
-  });
+  const [projects, setProjects] = useState<ProjectItem[]>(
+    initialData?.projects || RESUME_DATA.projects
+  );
 
-  const [skills, setSkills] = useState<SkillCategory[]>(() => {
-    const saved = localStorage.getItem(STORAGE_KEY_GLOBAL);
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        if (parsed.skills) return parsed.skills;
-      } catch (e) {}
-    }
-    return RESUME_DATA.skills;
-  });
+  const [experience, setExperience] = useState<ExperienceItem[]>(
+    initialData?.experience || RESUME_DATA.experience
+  );
+
+  const [skills, setSkills] = useState<SkillCategory[]>(
+    initialData?.skills || RESUME_DATA.skills
+  );
 
   const [syncStatus, setSyncStatus] = useState<string>('SYNCED');
 

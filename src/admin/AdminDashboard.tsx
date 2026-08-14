@@ -1,14 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { Mail, FolderGit2, Briefcase, Cpu, Trash2, CheckCircle2, ShieldAlert } from 'lucide-react';
 import { RESUME_DATA } from '../data/resumeData';
+import { fetchContactMessages } from '../services/firebase';
 
 export const AdminDashboard: React.FC = () => {
   const [messages, setMessages] = useState<any[]>([]);
 
   useEffect(() => {
-    // Read saved messages from localStorage/Firestore fallback
-    const saved = JSON.parse(localStorage.getItem('contact_messages') || '[]');
-    setMessages(saved);
+    // Read saved messages from Cloud Database / Firestore / localStorage
+    fetchContactMessages().then(msgs => {
+      setMessages(msgs);
+    });
   }, []);
 
   const handleDeleteMessage = (id: string) => {
