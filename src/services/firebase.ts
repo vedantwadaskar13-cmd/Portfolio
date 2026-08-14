@@ -4,7 +4,7 @@ import { getFirestore, collection, addDoc, doc, setDoc, onSnapshot, getDocs, que
 
 // Default Firebase Configuration
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyDummyKeyForLocalTestingOnly12345",
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyDBq1dEc3RmCQKMyjr2IoTg5NhYkDDyx3E",
   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "vedant-portfolio.firebaseapp.com",
   projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "vedant-portfolio",
   storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "vedant-portfolio.appspot.com",
