@@ -1,215 +1,254 @@
-import React, { useState } from 'react';
-import { motion } from 'framer-motion';
-import { Send, Terminal, Mail, Phone, MapPin, CheckCircle, Sparkles, Loader2 } from 'lucide-react';
-import { RESUME_DATA } from '../data/resumeData';
+import React, { useEffect, useRef, useState } from 'react';
+import { Mail, Phone, MapPin, Github, Linkedin, Send, Loader2, CheckCircle } from 'lucide-react';
+import { usePortfolio } from '../context/PortfolioContext';
 import { sendContactMessage } from '../services/firebase';
 
-export const ContactTerminal: React.FC = () => {
-  const { email, phone, location } = RESUME_DATA.personal;
+function useReveal() {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = ref.current; if (!el) return;
+    const obs = new IntersectionObserver(([e]) => {
+      if (e.isIntersecting) { el.classList.add('visible'); obs.disconnect(); }
+    }, { threshold: 0.08 });
+    obs.observe(el); return () => obs.disconnect();
+  }, []);
+  return ref;
+}
 
-  const [formData, setFormData] = useState({ name: '', email: '', message: '' });
-  const [status, setStatus] = useState<'IDLE' | 'CONNECTING' | 'PROCESSING' | 'SENT'>('IDLE');
-  const [errorMessage, setErrorMessage] = useState('');
+export const ContactTerminal: React.FC = () => {
+  const { personal } = usePortfolio();
+  const { name, email, phone, location, linkedin, github } = personal;
+  const [form, setForm] = useState({ name: '', email: '', subject: '', message: '' });
+  const [status, setStatus] = useState<'IDLE' | 'SENDING' | 'SENT'>('IDLE');
+  const ref = useReveal();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.name || !formData.email || !formData.message) {
-      setErrorMessage('// ERROR: ALL TRANSMISSION FIELDS ARE REQUIRED.');
-      return;
-    }
-
-    setErrorMessage('');
-    setStatus('CONNECTING');
-
-    setTimeout(async () => {
-      setStatus('PROCESSING');
-      const res = await sendContactMessage(formData);
-      if (res.success) {
-        setTimeout(() => {
-          setStatus('SENT');
-          setFormData({ name: '', email: '', message: '' });
-        }, 800);
-      }
-    }, 800);
+    if (!form.name || !form.email || !form.message) return;
+    setStatus('SENDING');
+    await sendContactMessage({ name: form.name, email: form.email, message: `${form.subject ? '[' + form.subject + '] ' : ''}${form.message}` });
+    setStatus('SENT');
+    setForm({ name: '', email: '', subject: '', message: '' });
+    setTimeout(() => setStatus('IDLE'), 4000);
   };
 
   return (
-    <section id="contact" className="relative py-28 overflow-hidden bg-slate-950/60">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        
-        {/* Heading */}
-        <div className="flex flex-col items-center text-center space-y-3 mb-16">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full glass-hud border border-cyan-500/30 font-mono text-xs text-cyan-400 tracking-widest uppercase">
-            <Terminal className="w-3.5 h-3.5" />
-            <span>COMMUNICATION_LINK // ENCRYPTED</span>
-          </div>
-          <h2 className="font-display font-extrabold text-3xl sm:text-5xl text-white tracking-tight">
-            INITIALIZE <span className="bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 via-emerald-400 to-purple-400">TRANSMISSION</span>
-          </h2>
-          <p className="text-slate-400 text-sm max-w-xl font-mono">
-            Send a direct encrypted message or telemetry ping to Vedant Wadaskar.
-          </p>
+    <section id="contact" style={{ borderBottom: '1px solid var(--border)' }}>
+      {/* Big "Let's Work Together" heading */}
+      <div
+        ref={ref}
+        className="reveal"
+        style={{
+          borderBottom: '1px solid var(--border)',
+          padding: 'clamp(60px, 8vw, 100px) var(--pad-x)',
+          textAlign: 'center',
+        }}
+      >
+        <div className="section-tag" style={{ justifyContent: 'center' }}>
+          Get in Touch
         </div>
+        <h2
+          className="font-display"
+          style={{
+            fontSize: 'clamp(48px, 9vw, 120px)',
+            lineHeight: '0.95',
+            letterSpacing: '-0.04em',
+            color: 'var(--text-h)',
+            marginBottom: '24px',
+          }}
+        >
+          LET'S WORK<br />
+          <span style={{ color: 'var(--accent)' }}>TOGETHER</span>
+        </h2>
+        <p style={{ fontSize: '18px', color: 'var(--text-b)', maxWidth: '480px', margin: '0 auto 32px' }}>
+          Open to full-time roles, freelance projects, and interesting collaborations.
+        </p>
+        <a
+          href={`mailto:${email}`}
+          style={{
+            fontSize: 'clamp(18px, 2.5vw, 28px)',
+            fontWeight: 700,
+            color: 'var(--text-h)',
+            textDecoration: 'none',
+            borderBottom: '2px solid var(--accent)',
+            paddingBottom: '4px',
+            transition: 'color 0.2s ease',
+          }}
+          onMouseEnter={e => (e.currentTarget.style.color = 'var(--accent)')}
+          onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-h)')}
+        >
+          {email || 'vedantwadaskar13@gmail.com'}
+        </a>
+      </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
-          
-          {/* Left Info Panel */}
-          <div className="lg:col-span-5 space-y-6">
-            <div className="p-8 rounded-2xl glass-hud border border-cyan-500/30 hud-corner-box space-y-6">
-              <div className="space-y-2">
-                <h3 className="font-display font-bold text-2xl text-white">DIRECT TELEMETRY</h3>
-                <p className="text-slate-300 text-xs sm:text-sm leading-relaxed">
-                  Open for entry-level AI/ML Engineer, Machine Learning Engineer, and Data Analytics positions.
-                </p>
-              </div>
+      {/* Contact grid: info + form */}
+      <div
+        className="container-agency"
+        style={{
+          paddingBlock: 'clamp(60px, 6vw, 80px)',
+          display: 'grid',
+          gridTemplateColumns: '1fr 1fr',
+          gap: 'clamp(40px, 6vw, 80px)',
+        }}
+      >
+        {/* Left: contact info */}
+        <div>
+          <h3
+            className="font-display"
+            style={{
+              fontSize: 'clamp(24px, 2.5vw, 32px)',
+              color: 'var(--text-h)',
+              marginBottom: '32px',
+              letterSpacing: '-0.02em',
+            }}
+          >
+            Contact Information
+          </h3>
 
-              <div className="space-y-4 pt-4 border-t border-slate-800 font-mono text-xs">
-                <a
-                  href={`mailto:${email}`}
-                  className="flex items-center gap-4 p-3.5 rounded-xl bg-slate-900/80 border border-slate-800 hover:border-cyan-400/50 hover:text-cyan-300 transition-colors group"
-                >
-                  <div className="p-2 rounded-lg bg-cyan-500/10 text-cyan-400">
-                    <Mail className="w-4 h-4" />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', marginBottom: '40px' }}>
+            {[
+              { Icon: Mail,   label: 'Email',    value: email || 'vedantwadaskar13@gmail.com',  href: `mailto:${email}` },
+              { Icon: Phone,  label: 'Phone',    value: phone || '+91 7057174952',               href: `tel:${phone}` },
+              { Icon: MapPin, label: 'Location', value: location || 'Pune, Maharashtra, India', href: undefined },
+            ].map(({ Icon, label, value, href }) => {
+              const inner = (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                  <div style={{
+                    width: '44px', height: '44px', borderRadius: '12px',
+                    background: 'var(--accent-dim)', border: '1px solid var(--accent-border)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    color: 'var(--accent)', flexShrink: 0,
+                  }}>
+                    <Icon size={18} />
                   </div>
                   <div>
-                    <span className="text-[10px] text-slate-500 block">EMAIL_CHANNEL</span>
-                    <span className="text-slate-200 group-hover:text-cyan-300 font-medium">{email}</span>
-                  </div>
-                </a>
-
-                <a
-                  href={`tel:${phone.replace(/\s+/g, '')}`}
-                  className="flex items-center gap-4 p-3.5 rounded-xl bg-slate-900/80 border border-slate-800 hover:border-emerald-400/50 hover:text-emerald-300 transition-colors group"
-                >
-                  <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-400">
-                    <Phone className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <span className="text-[10px] text-slate-500 block">VOICE_CHANNEL</span>
-                    <span className="text-slate-200 group-hover:text-emerald-300 font-medium">{phone}</span>
-                  </div>
-                </a>
-
-                <div className="flex items-center gap-4 p-3.5 rounded-xl bg-slate-900/80 border border-slate-800">
-                  <div className="p-2 rounded-lg bg-purple-500/10 text-purple-400">
-                    <MapPin className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <span className="text-[10px] text-slate-500 block">GEO_LOCATION</span>
-                    <span className="text-slate-200 font-medium">{location}</span>
+                    <div style={{ fontSize: '11px', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '2px' }}>{label}</div>
+                    <div style={{ fontSize: '14px', color: 'var(--text-h)', fontWeight: 500 }}>{value}</div>
                   </div>
                 </div>
-              </div>
+              );
+              return href ? (
+                <a key={label} href={href} style={{ textDecoration: 'none' }}
+                  onMouseEnter={e => (e.currentTarget.querySelector('div')!.style.color = 'var(--accent)')}
+                  onMouseLeave={e => (e.currentTarget.querySelector('div')!.style.color = '')}
+                >{inner}</a>
+              ) : <div key={label}>{inner}</div>;
+            })}
+          </div>
+
+          {/* Divider */}
+          <div style={{ height: '1px', background: 'var(--border)', marginBottom: '28px' }} />
+
+          {/* Social row */}
+          <div style={{ display: 'flex', gap: '12px' }}>
+            {[
+              { Icon: Github, href: github || '#', label: 'GitHub' },
+              { Icon: Linkedin, href: linkedin || '#', label: 'LinkedIn' },
+            ].map(({ Icon, href, label }) => (
+              <a
+                key={label}
+                href={href}
+                target="_blank"
+                rel="noreferrer"
+                aria-label={label}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: '8px',
+                  padding: '10px 18px', borderRadius: '999px',
+                  border: '1px solid var(--border)',
+                  color: 'var(--text-b)',
+                  textDecoration: 'none', fontSize: '13px', fontWeight: 600,
+                  transition: 'all 0.2s ease',
+                }}
+                onMouseEnter={e => {
+                  (e.currentTarget as HTMLElement).style.borderColor = 'var(--accent-border)';
+                  (e.currentTarget as HTMLElement).style.color = 'var(--accent)';
+                  (e.currentTarget as HTMLElement).style.background = 'var(--accent-dim)';
+                }}
+                onMouseLeave={e => {
+                  (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)';
+                  (e.currentTarget as HTMLElement).style.color = 'var(--text-b)';
+                  (e.currentTarget as HTMLElement).style.background = 'transparent';
+                }}
+              >
+                <Icon size={15} /> {label}
+              </a>
+            ))}
+          </div>
+        </div>
+
+        {/* Right: contact form */}
+        <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+            <div>
+              <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-muted)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '6px' }}>
+                Name
+              </label>
+              <input className="agency-input" type="text" placeholder="John Doe" required
+                value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
+            </div>
+            <div>
+              <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-muted)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '6px' }}>
+                Email
+              </label>
+              <input className="agency-input" type="email" placeholder="john@example.com" required
+                value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} />
             </div>
           </div>
-
-          {/* Right Terminal Form */}
-          <div className="lg:col-span-7">
-            <motion.div
-              initial={{ opacity: 0, y: 30 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              className="p-8 rounded-2xl glass-hud border border-cyan-500/40 hud-corner-box space-y-6"
-            >
-              {/* Terminal Header */}
-              <div className="flex items-center justify-between pb-4 border-b border-slate-800 font-mono text-xs">
-                <div className="flex items-center gap-2 text-cyan-400">
-                  <Terminal className="w-4 h-4" />
-                  <span>TRANSMISSION_CONSOLE v2.7</span>
-                </div>
-                <div className="flex items-center gap-1.5 text-emerald-400">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping" />
-                  <span>SOCKET: CONNECTED</span>
-                </div>
-              </div>
-
-              <form onSubmit={handleSubmit} className="space-y-5 font-mono">
-                {errorMessage && (
-                  <div className="p-3 rounded-xl bg-red-950/40 border border-red-500/40 text-red-300 text-xs">
-                    {errorMessage}
-                  </div>
-                )}
-
-                <div>
-                  <label className="block text-xs text-cyan-400 mb-2 uppercase">
-                    [01] SENDER_NAME:
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="Enter your name or organization..."
-                    value={formData.name}
-                    onChange={e => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full px-4 py-3 rounded-xl bg-slate-900/90 border border-slate-800 text-xs text-slate-100 focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 transition-colors"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs text-cyan-400 mb-2 uppercase">
-                    [02] RETURN_EMAIL:
-                  </label>
-                  <input
-                    type="email"
-                    required
-                    placeholder="Enter your contact email..."
-                    value={formData.email}
-                    onChange={e => setFormData({ ...formData, email: e.target.value })}
-                    className="w-full px-4 py-3 rounded-xl bg-slate-900/90 border border-slate-800 text-xs text-slate-100 focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 transition-colors"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs text-cyan-400 mb-2 uppercase">
-                    [03] TRANSMISSION_MESSAGE:
-                  </label>
-                  <textarea
-                    rows={4}
-                    required
-                    placeholder="Write your message or inquiry..."
-                    value={formData.message}
-                    onChange={e => setFormData({ ...formData, message: e.target.value })}
-                    className="w-full px-4 py-3 rounded-xl bg-slate-900/90 border border-slate-800 text-xs text-slate-100 focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 transition-colors resize-none"
-                  />
-                </div>
-
-                {/* Submit Action Button */}
-                <button
-                  type="submit"
-                  disabled={status !== 'IDLE' && status !== 'SENT'}
-                  className="w-full py-4 rounded-xl bg-gradient-to-r from-cyan-500 to-emerald-500 text-black font-mono font-bold text-xs uppercase tracking-wider flex items-center justify-center gap-2 shadow-[0_0_25px_rgba(0,243,255,0.4)] hover:shadow-[0_0_35px_rgba(0,243,255,0.7)] transition-all disabled:opacity-70 interactive-hover"
-                >
-                  {status === 'IDLE' && (
-                    <>
-                      <span>SEND TRANSMISSION</span>
-                      <Send className="w-4 h-4" />
-                    </>
-                  )}
-                  {status === 'CONNECTING' && (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      <span>CONNECTING TO SECURE SOCKET...</span>
-                    </>
-                  )}
-                  {status === 'PROCESSING' && (
-                    <>
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      <span>PROCESSING TRANSMISSION...</span>
-                    </>
-                  )}
-                  {status === 'SENT' && (
-                    <>
-                      <CheckCircle className="w-4 h-4" />
-                      <span>TRANSMISSION COMPLETE!</span>
-                    </>
-                  )}
-                </button>
-              </form>
-            </motion.div>
+          <div>
+            <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-muted)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '6px' }}>
+              Subject
+            </label>
+            <input className="agency-input" type="text" placeholder="Project Inquiry"
+              value={form.subject} onChange={e => setForm({ ...form, subject: e.target.value })} />
           </div>
-
-        </div>
-
+          <div>
+            <label style={{ display: 'block', fontSize: '12px', color: 'var(--text-muted)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '6px' }}>
+              Message
+            </label>
+            <textarea className="agency-input" rows={5} placeholder="Tell me about your project..." required
+              value={form.message} onChange={e => setForm({ ...form, message: e.target.value })}
+              style={{ resize: 'none' }}
+            />
+          </div>
+          <button type="submit" disabled={status === 'SENDING'} className="neon-btn"
+            style={{ alignSelf: 'flex-start', minWidth: '160px', justifyContent: 'center' }}>
+            {status === 'IDLE'    && <><Send size={15} /> Send Message</>}
+            {status === 'SENDING' && <><Loader2 size={15} style={{ animation: 'spin 1s linear infinite' }} /> Sending...</>}
+            {status === 'SENT'    && <><CheckCircle size={15} /> Sent!</>}
+          </button>
+        </form>
       </div>
+
+      {/* Footer bar */}
+      <div style={{
+        borderTop: '1px solid var(--border)',
+        padding: '20px var(--pad-x)',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        flexWrap: 'wrap',
+        gap: '12px',
+      }}>
+        <span style={{ fontSize: '13px', color: 'var(--text-muted)' }}>
+          © {new Date().getFullYear()} {name || 'Vedant Wadaskar'}. All rights reserved.
+        </span>
+        <button
+          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+          className="outline-btn"
+          style={{ padding: '8px 18px', fontSize: '12px' }}
+        >
+          Back to Top ↑
+        </button>
+      </div>
+
+      <style>{`
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        @media (max-width: 768px) {
+          #contact > div:nth-child(2) {
+            grid-template-columns: 1fr !important;
+          }
+        }
+      `}</style>
     </section>
   );
 };

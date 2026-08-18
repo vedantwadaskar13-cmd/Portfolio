@@ -59,6 +59,8 @@ export const RESUME_DATA = {
     github: 'https://github.com/vedantwadaskar13-cmd',
     summary: 'AI/ML Engineer with hands-on experience building machine learning models, chatbots, and full-stack data-driven applications. Skilled in Python, exploratory data analysis, and Generative AI, with a strong foundation in classification, NLP, and recommendation systems. Quick to learn new tools and adapt to emerging technologies, with a track record of translating data into actionable insights and functional AI-powered solutions. Seeking an entry-level AI/ML Engineer or Machine Learning Engineer role to apply technical skills and deliver measurable impact.',
     academicFocus: 'Bachelor of Engineering (B.E.) in Mechanical Engineering (2023-2027) combining CAD Engineering (SolidWorks, ANSYS, CATIA) with advanced AI/ML algorithms and data analytics (SQL, Python, Power BI).',
+    heroImage: '',
+    resumeUrl: '',
   },
   skills: [
     {

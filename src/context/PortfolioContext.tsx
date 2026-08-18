@@ -14,6 +14,7 @@ export interface PersonalInfo {
   github: string;
   summary: string;
   academicFocus: string;
+  heroImage?: string;
   resumeUrl?: string;
   customResumeText?: string;
 }

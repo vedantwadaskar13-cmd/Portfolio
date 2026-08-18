@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
-import { Lock, Key, ShieldCheck, ArrowLeft, AlertCircle } from 'lucide-react';
+import { Lock, Key, ShieldCheck, ArrowLeft, AlertCircle, Loader2 } from 'lucide-react';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '../services/firebase';
 
@@ -14,11 +13,7 @@ export const ADMIN_CREDS_KEY = 'vedant_admin_credentials';
 export const getAdminCreds = () => {
   const saved = localStorage.getItem(ADMIN_CREDS_KEY);
   if (saved) {
-    try {
-      return JSON.parse(saved);
-    } catch {
-      // fallback
-    }
+    try { return JSON.parse(saved); } catch {}
   }
   return {
     email: import.meta.env.VITE_ADMIN_EMAIL || 'vedantwadaskar13@gmail.com',
@@ -34,86 +29,150 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess, onExit }
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setLoading(true);
-    setError('');
-
-    const targetCreds = getAdminCreds();
-    const inputEmail = email.trim().toLowerCase();
-    const expectedEmail = targetCreds.email.trim().toLowerCase();
+    setLoading(true); setError('');
+    const creds = getAdminCreds();
 
     try {
       if (import.meta.env.VITE_FIREBASE_API_KEY && import.meta.env.VITE_FIREBASE_PROJECT_ID !== 'vedant-portfolio') {
-        const userCredential = await signInWithEmailAndPassword(auth, email, password);
-        onLoginSuccess(userCredential.user);
-        return;
+        const uc = await signInWithEmailAndPassword(auth, email, password);
+        onLoginSuccess(uc.user); return;
       }
-
-      // Strict Authentication Verification against authorized Admin Credentials
-      if (inputEmail === expectedEmail && password === targetCreds.password) {
-        onLoginSuccess({ email: targetCreds.email, uid: 'admin_vedant_verified' });
+      if (email.trim().toLowerCase() === creds.email.trim().toLowerCase() && password === creds.password) {
+        onLoginSuccess({ email: creds.email, uid: 'admin_vedant_verified' });
       } else {
-        setError('ACCESS DENIED: Invalid Admin ID or Password. Only authorized credentials permitted.');
+        setError('Invalid credentials. Access denied.');
       }
-    } catch (err: any) {
-      setError('ACCESS DENIED: Authentication failed. Please check your credentials.');
+    } catch {
+      setError('Authentication failed. Please check your credentials.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-[#030712] text-slate-100 flex items-center justify-center p-4">
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95, y: 20 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        className="w-full max-w-md bg-slate-950 border border-purple-500/40 rounded-2xl shadow-[0_0_50px_rgba(139,92,246,0.25)] p-8 hud-corner-box space-y-6"
-      >
-        {/* Header */}
-        <div className="text-center space-y-2">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/15 border border-purple-400/40 text-purple-300 font-mono text-xs">
-            <ShieldCheck className="w-4 h-4 text-emerald-400" />
-            <span>PROTECTED ADMIN SECURITY</span>
+    <div style={{
+      minHeight: '100vh',
+      background: '#0C0C0C',
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      padding: '24px',
+      fontFamily: "'Inter', sans-serif",
+    }}>
+      {/* Subtle background glow */}
+      <div style={{
+        position: 'fixed', top: '30%', left: '50%',
+        transform: 'translateX(-50%)',
+        width: '600px', height: '400px',
+        borderRadius: '50%',
+        background: 'radial-gradient(circle, rgba(198,241,53,0.05) 0%, transparent 65%)',
+        filter: 'blur(60px)',
+        pointerEvents: 'none',
+      }} />
+
+      <div style={{
+        width: '100%', maxWidth: '420px',
+        background: '#111',
+        border: '1px solid rgba(255,255,255,0.08)',
+        borderRadius: '24px',
+        padding: '40px',
+        position: 'relative',
+      }}>
+        {/* Brand badge */}
+        <div style={{ textAlign: 'center', marginBottom: '32px' }}>
+          {/* Logo */}
+          <div style={{
+            width: '52px', height: '52px', borderRadius: '14px',
+            background: '#C6F135',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: '18px', color: '#0C0C0C',
+            margin: '0 auto 16px',
+          }}>
+            VW
           </div>
-          <h2 className="font-display font-extrabold text-2xl text-white">PORTFOLIO CONTROL CENTER</h2>
-          <p className="font-mono text-xs text-slate-400">
-            Strict authentication required. Authorized owner access only.
+
+          <div style={{
+            display: 'inline-flex', alignItems: 'center', gap: '6px',
+            padding: '5px 12px', borderRadius: '999px',
+            background: 'rgba(198,241,53,0.1)', border: '1px solid rgba(198,241,53,0.3)',
+            marginBottom: '14px',
+          }}>
+            <ShieldCheck size={12} style={{ color: '#C6F135' }} />
+            <span style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', color: '#C6F135' }}>
+              Secure Admin Access
+            </span>
+          </div>
+
+          <h1 style={{
+            fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: '24px',
+            color: '#fff', marginBottom: '6px', letterSpacing: '-0.02em',
+          }}>
+            Portfolio CMS
+          </h1>
+          <p style={{ fontSize: '13px', color: '#555' }}>
+            Authorized access only. Enter your admin credentials.
           </p>
         </div>
 
+        {/* Error */}
         {error && (
-          <div className="p-3.5 rounded-xl bg-red-950/60 border border-red-500/50 text-red-300 text-xs font-mono flex items-start gap-2.5">
-            <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-            <span>{error}</span>
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: '10px',
+            padding: '12px 16px', borderRadius: '12px',
+            background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.25)',
+            color: '#ef4444', fontSize: '13px', marginBottom: '20px',
+          }}>
+            <AlertCircle size={15} style={{ flexShrink: 0 }} />
+            {error}
           </div>
         )}
 
-        <form onSubmit={handleLogin} className="space-y-4 font-mono text-xs">
+        {/* Form */}
+        <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
           <div>
-            <label className="block text-slate-400 mb-1">ADMIN EMAIL / ID:</label>
-            <div className="relative">
-              <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+            <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#555', marginBottom: '8px' }}>
+              Email Address
+            </label>
+            <div style={{ position: 'relative' }}>
+              <Lock size={15} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: '#444' }} />
               <input
-                type="email"
-                required
+                type="email" required
                 placeholder="vedantwadaskar13@gmail.com"
                 value={email}
                 onChange={e => setEmail(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-900 border border-slate-800 text-slate-100 focus:outline-none focus:border-purple-400"
+                style={{
+                  width: '100%', paddingLeft: '42px', paddingRight: '16px',
+                  paddingTop: '12px', paddingBottom: '12px',
+                  background: '#0C0C0C', border: '1px solid rgba(255,255,255,0.08)',
+                  borderRadius: '12px', color: '#fff', fontSize: '14px',
+                  fontFamily: "'Inter', sans-serif", outline: 'none', boxSizing: 'border-box',
+                  transition: 'border-color 0.2s ease',
+                }}
+                onFocus={e => (e.target.style.borderColor = 'rgba(198,241,53,0.4)')}
+                onBlur={e => (e.target.style.borderColor = 'rgba(255,255,255,0.08)')}
               />
             </div>
           </div>
 
           <div>
-            <label className="block text-slate-400 mb-1">ADMIN PASSWORD:</label>
-            <div className="relative">
-              <Key className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+            <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#555', marginBottom: '8px' }}>
+              Password
+            </label>
+            <div style={{ position: 'relative' }}>
+              <Key size={15} style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: '#444' }} />
               <input
-                type="password"
-                required
-                placeholder="Enter password..."
+                type="password" required
+                placeholder="Enter your password"
                 value={password}
                 onChange={e => setPassword(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-900 border border-slate-800 text-slate-100 focus:outline-none focus:border-purple-400"
+                style={{
+                  width: '100%', paddingLeft: '42px', paddingRight: '16px',
+                  paddingTop: '12px', paddingBottom: '12px',
+                  background: '#0C0C0C', border: '1px solid rgba(255,255,255,0.08)',
+                  borderRadius: '12px', color: '#fff', fontSize: '14px',
+                  fontFamily: "'Inter', sans-serif", outline: 'none', boxSizing: 'border-box',
+                  transition: 'border-color 0.2s ease',
+                }}
+                onFocus={e => (e.target.style.borderColor = 'rgba(198,241,53,0.4)')}
+                onBlur={e => (e.target.style.borderColor = 'rgba(255,255,255,0.08)')}
               />
             </div>
           </div>
@@ -121,22 +180,45 @@ export const AdminLogin: React.FC<AdminLoginProps> = ({ onLoginSuccess, onExit }
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3.5 rounded-xl bg-gradient-to-r from-purple-600 to-cyan-500 text-white font-mono font-bold text-xs uppercase tracking-wider shadow-neon-purple hover:scale-[1.02] transition-all disabled:opacity-50"
+            style={{
+              width: '100%', padding: '14px',
+              background: '#C6F135', borderRadius: '12px', border: 'none',
+              color: '#0C0C0C', fontSize: '14px', fontWeight: 700,
+              cursor: loading ? 'not-allowed' : 'pointer', marginTop: '8px',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+              opacity: loading ? 0.7 : 1,
+              transition: 'all 0.2s ease',
+              fontFamily: "'Inter', sans-serif",
+            }}
+            onMouseEnter={e => { if (!loading) (e.currentTarget.style.background = '#d4ff3d'); }}
+            onMouseLeave={e => { if (!loading) (e.currentTarget.style.background = '#C6F135'); }}
           >
-            {loading ? 'VERIFYING CREDENTIALS...' : 'VERIFY & ENTER CMS'}
+            {loading ? (
+              <><Loader2 size={15} style={{ animation: 'spin 1s linear infinite' }} /> Verifying...</>
+            ) : (
+              'Enter Admin Portal →'
+            )}
           </button>
         </form>
 
-        <div className="pt-4 border-t border-slate-800 flex justify-center">
+        {/* Back link */}
+        <div style={{ marginTop: '24px', textAlign: 'center' }}>
           <button
             onClick={onExit}
-            className="text-slate-400 hover:text-white font-mono text-xs flex items-center justify-center gap-1.5"
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: '6px',
+              background: 'none', border: 'none', color: '#444',
+              fontSize: '13px', cursor: 'pointer', transition: 'color 0.2s ease',
+              fontFamily: "'Inter', sans-serif",
+            }}
+            onMouseEnter={e => (e.currentTarget.style.color = '#fff')}
+            onMouseLeave={e => (e.currentTarget.style.color = '#444')}
           >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            <span>Return to Public Website</span>
+            <ArrowLeft size={13} /> Return to Portfolio
           </button>
         </div>
-      </motion.div>
+      </div>
+      <style>{`@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 };

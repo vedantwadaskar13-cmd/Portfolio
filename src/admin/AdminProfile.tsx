@@ -1,279 +1,426 @@
-import React, { useState } from 'react';
-import { User, Save, CheckCircle2, Mail, Sparkles, FileText, Upload, Link, Key, ShieldCheck } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { User, Save, CheckCircle2, Mail, Sparkles, FileText, Upload, Link, Key, ImageIcon, X, Eye } from 'lucide-react';
 import { usePortfolio } from '../context/PortfolioContext';
 import { getAdminCreds, ADMIN_CREDS_KEY } from './AdminLogin';
 
+const FIELD_STYLE: React.CSSProperties = {
+  width: '100%', padding: '11px 14px',
+  background: '#0C0C0C', border: '1px solid rgba(255,255,255,0.08)',
+  borderRadius: '10px', color: '#fff', fontSize: '13px',
+  fontFamily: "'Inter', sans-serif", outline: 'none',
+  boxSizing: 'border-box', transition: 'border-color 0.2s ease',
+};
+const LABEL_STYLE: React.CSSProperties = {
+  display: 'block', fontSize: '10px', fontWeight: 700,
+  letterSpacing: '0.12em', textTransform: 'uppercase',
+  color: '#555', marginBottom: '7px',
+};
+const SECTION_TITLE: React.CSSProperties = {
+  fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: '14px',
+  color: '#fff', display: 'flex', alignItems: 'center', gap: '8px',
+  paddingBottom: '12px', borderBottom: '1px solid rgba(255,255,255,0.06)',
+  marginBottom: '18px',
+};
+const CARD_STYLE: React.CSSProperties = {
+  background: '#141414', border: '1px solid rgba(255,255,255,0.07)',
+  borderRadius: '16px', padding: '24px', marginBottom: '16px',
+};
+
 export const AdminProfile: React.FC = () => {
   const { personal, updatePersonal } = usePortfolio();
-  const [formData, setFormData] = useState(personal);
+  const [formData, setFormData] = useState({ ...personal });
   const [adminCreds, setAdminCreds] = useState(getAdminCreds());
   const [saved, setSaved] = useState(false);
-  const [uploadStatus, setUploadStatus] = useState('');
+  const [resumeStatus, setResumeStatus] = useState('');
+  const [heroImgStatus, setHeroImgStatus] = useState('');
+  const [heroPreview, setHeroPreview] = useState<string>(personal.heroImage || '/assets/images/hero_vedant.jpg');
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const heroFileRef = useRef<HTMLInputElement>(null);
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
+  /* ── Resume upload ── */
+  const handleResumeUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]; if (!file) return;
     const reader = new FileReader();
-    reader.onload = (event) => {
-      const dataUrl = event.target?.result as string;
-      setFormData(prev => ({ ...prev, resumeUrl: dataUrl }));
-      setUploadStatus(`Uploaded: ${file.name} (${(file.size / 1024).toFixed(1)} KB)`);
+    reader.onload = ev => {
+      setFormData(prev => ({ ...prev, resumeUrl: ev.target?.result as string }));
+      setResumeStatus(`✓ ${file.name} (${(file.size / 1024).toFixed(1)} KB)`);
     };
     reader.readAsDataURL(file);
   };
 
+  /* ── Hero image upload ── */
+  const handleHeroImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]; if (!file) return;
+    if (!file.type.startsWith('image/')) { setHeroImgStatus('✗ Please select an image file (JPG, PNG, WebP)'); return; }
+    if (file.size > 5 * 1024 * 1024) { setHeroImgStatus('✗ File too large. Max 5MB.'); return; }
+
+    const reader = new FileReader();
+    reader.onload = ev => {
+      const dataUrl = ev.target?.result as string;
+      setHeroPreview(dataUrl);
+      setFormData(prev => ({ ...prev, heroImage: dataUrl }));
+      setHeroImgStatus(`✓ ${file.name} (${(file.size / 1024).toFixed(1)} KB) — click Save to apply`);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleHeroUrlChange = (url: string) => {
+    setFormData(prev => ({ ...prev, heroImage: url }));
+    if (url.startsWith('http') || url.startsWith('/')) setHeroPreview(url);
+  };
+
+  const clearHeroImage = () => {
+    setFormData(prev => ({ ...prev, heroImage: '' }));
+    setHeroPreview('/assets/images/hero_vedant.jpg');
+    setHeroImgStatus('Cleared — default image will be used');
+    if (heroFileRef.current) heroFileRef.current.value = '';
+  };
+
+  /* ── Save ── */
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     updatePersonal(formData);
-    // Save updated admin login credentials
     localStorage.setItem(ADMIN_CREDS_KEY, JSON.stringify(adminCreds));
-
     setSaved(true);
     setTimeout(() => setSaved(false), 3500);
   };
 
   return (
-    <div className="space-y-6 font-sans">
-      <div className="flex items-center justify-between font-mono">
-        <div>
-          <h2 className="font-display font-bold text-2xl text-white">PROFILE & SECURITY CMS MANAGER</h2>
-          <p className="text-xs text-slate-400">Update personal details, contact channels, resume files, and your Admin password.</p>
-        </div>
+    <div style={{ maxWidth: '900px' }}>
+      {/* Page header */}
+      <div style={{ marginBottom: '28px' }}>
+        <h1 style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: '28px', color: '#fff', marginBottom: '6px' }}>
+          Profile & Hero
+        </h1>
+        <p style={{ fontSize: '14px', color: '#555' }}>
+          Edit your personal info, hero section image, resume, and admin password.
+        </p>
       </div>
 
+      {/* Success banner */}
       {saved && (
-        <div className="p-4 rounded-xl bg-emerald-950/40 border border-emerald-500/40 text-emerald-300 font-mono text-xs flex items-center gap-2">
-          <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-          <span>PROFILE & SECURITY CREDENTIALS SAVED LIVE! ADMIN PORTAL UPDATED.</span>
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: '10px',
+          padding: '14px 18px', borderRadius: '12px',
+          background: 'rgba(198,241,53,0.08)', border: '1px solid rgba(198,241,53,0.3)',
+          color: '#C6F135', fontSize: '13px', marginBottom: '20px',
+        }}>
+          <CheckCircle2 size={16} /> Profile saved and applied live to the portfolio!
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="p-8 rounded-2xl glass-hud border border-purple-500/40 space-y-6 font-mono text-xs">
-        
-        {/* Section 1: Basic Info */}
-        <div className="space-y-4">
-          <h3 className="font-bold text-purple-300 border-b border-slate-800 pb-2 text-sm flex items-center gap-2">
-            <User className="w-4 h-4 text-cyan-400" />
-            <span>[01] PERSONAL INFORMATION & TITLES</span>
-          </h3>
+      <form onSubmit={handleSubmit}>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {/* ── Section 01: Personal Info ── */}
+        <div style={CARD_STYLE}>
+          <div style={SECTION_TITLE}>
+            <User size={15} style={{ color: '#C6F135' }} /> 01 — Personal Information
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
             <div>
-              <label className="block text-slate-400 mb-1">FULL NAME:</label>
-              <input
-                type="text"
-                required
-                value={formData.name}
+              <label style={LABEL_STYLE}>Full Name</label>
+              <input style={FIELD_STYLE} type="text" required value={formData.name}
                 onChange={e => setFormData({ ...formData, name: e.target.value })}
-                className="w-full p-3 rounded-xl bg-slate-900 border border-slate-800 text-white focus:outline-none focus:border-cyan-400"
-              />
+                onFocus={e => (e.target.style.borderColor = 'rgba(198,241,53,0.4)')}
+                onBlur={e => (e.target.style.borderColor = 'rgba(255,255,255,0.08)')} />
             </div>
-
             <div>
-              <label className="block text-slate-400 mb-1">PRIMARY TITLE:</label>
-              <input
-                type="text"
-                required
-                value={formData.title}
+              <label style={LABEL_STYLE}>Primary Title</label>
+              <input style={FIELD_STYLE} type="text" required value={formData.title}
                 onChange={e => setFormData({ ...formData, title: e.target.value })}
-                className="w-full p-3 rounded-xl bg-slate-900 border border-slate-800 text-white focus:outline-none focus:border-cyan-400"
-              />
+                onFocus={e => (e.target.style.borderColor = 'rgba(198,241,53,0.4)')}
+                onBlur={e => (e.target.style.borderColor = 'rgba(255,255,255,0.08)')} />
             </div>
-
-            <div className="sm:col-span-2">
-              <label className="block text-slate-400 mb-1">SUBTITLE / TAGLINE:</label>
-              <input
-                type="text"
-                value={formData.tagline}
+            <div style={{ gridColumn: '1 / -1' }}>
+              <label style={LABEL_STYLE}>Tagline</label>
+              <input style={FIELD_STYLE} type="text" value={formData.tagline || ''}
                 onChange={e => setFormData({ ...formData, tagline: e.target.value })}
-                className="w-full p-3 rounded-xl bg-slate-900 border border-slate-800 text-white focus:outline-none focus:border-cyan-400"
-              />
+                onFocus={e => (e.target.style.borderColor = 'rgba(198,241,53,0.4)')}
+                onBlur={e => (e.target.style.borderColor = 'rgba(255,255,255,0.08)')} />
             </div>
           </div>
         </div>
 
-        {/* Section 2: Contact Channels */}
-        <div className="space-y-4 pt-4 border-t border-slate-800">
-          <h3 className="font-bold text-purple-300 border-b border-slate-800 pb-2 text-sm flex items-center gap-2">
-            <Mail className="w-4 h-4 text-emerald-400" />
-            <span>[02] CONTACT DETAILS & SOCIAL LINKS</span>
-          </h3>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-slate-400 mb-1">LOCATION:</label>
-              <input
-                type="text"
-                value={formData.location}
-                onChange={e => setFormData({ ...formData, location: e.target.value })}
-                className="w-full p-3 rounded-xl bg-slate-900 border border-slate-800 text-white focus:outline-none focus:border-cyan-400"
-              />
-            </div>
-
-            <div>
-              <label className="block text-slate-400 mb-1">PHONE NUMBER:</label>
-              <input
-                type="text"
-                value={formData.phone}
-                onChange={e => setFormData({ ...formData, phone: e.target.value })}
-                className="w-full p-3 rounded-xl bg-slate-900 border border-slate-800 text-white focus:outline-none focus:border-cyan-400"
-              />
-            </div>
-
-            <div>
-              <label className="block text-slate-400 mb-1">EMAIL ADDRESS:</label>
-              <input
-                type="email"
-                required
-                value={formData.email}
-                onChange={e => setFormData({ ...formData, email: e.target.value })}
-                className="w-full p-3 rounded-xl bg-slate-900 border border-slate-800 text-white focus:outline-none focus:border-cyan-400"
-              />
-            </div>
-
-            <div>
-              <label className="block text-slate-400 mb-1">LINKEDIN URL:</label>
-              <input
-                type="text"
-                value={formData.linkedin}
-                onChange={e => setFormData({ ...formData, linkedin: e.target.value })}
-                className="w-full p-3 rounded-xl bg-slate-900 border border-slate-800 text-white focus:outline-none focus:border-cyan-400"
-              />
-            </div>
-
-            <div className="sm:col-span-2">
-              <label className="block text-slate-400 mb-1">GITHUB REPOSITORY URL:</label>
-              <input
-                type="text"
-                value={formData.github}
+        {/* ── Section 02: Contact & Social ── */}
+        <div style={CARD_STYLE}>
+          <div style={SECTION_TITLE}>
+            <Mail size={15} style={{ color: '#60a5fa' }} /> 02 — Contact & Social Links
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+            {[
+              { label: 'Location', key: 'location', type: 'text' },
+              { label: 'Phone', key: 'phone', type: 'text' },
+              { label: 'Email Address', key: 'email', type: 'email' },
+              { label: 'LinkedIn URL', key: 'linkedin', type: 'text' },
+            ].map(({ label, key, type }) => (
+              <div key={key}>
+                <label style={LABEL_STYLE}>{label}</label>
+                <input style={FIELD_STYLE} type={type} value={(formData as any)[key] || ''}
+                  onChange={e => setFormData({ ...formData, [key]: e.target.value })}
+                  onFocus={e => (e.target.style.borderColor = 'rgba(198,241,53,0.4)')}
+                  onBlur={e => (e.target.style.borderColor = 'rgba(255,255,255,0.08)')} />
+              </div>
+            ))}
+            <div style={{ gridColumn: '1 / -1' }}>
+              <label style={LABEL_STYLE}>GitHub URL</label>
+              <input style={FIELD_STYLE} type="text" value={formData.github || ''}
                 onChange={e => setFormData({ ...formData, github: e.target.value })}
-                className="w-full p-3 rounded-xl bg-slate-900 border border-slate-800 text-white focus:outline-none focus:border-cyan-400"
-              />
+                onFocus={e => (e.target.style.borderColor = 'rgba(198,241,53,0.4)')}
+                onBlur={e => (e.target.style.borderColor = 'rgba(255,255,255,0.08)')} />
             </div>
           </div>
         </div>
 
-        {/* Section 3: Professional Summary & About Content */}
-        <div className="space-y-4 pt-4 border-t border-slate-800">
-          <h3 className="font-bold text-purple-300 border-b border-slate-800 pb-2 text-sm flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-amber-400" />
-            <span>[03] ABOUT SECTION & PROFESSIONAL SUMMARY</span>
-          </h3>
-
-          <div>
-            <label className="block text-slate-400 mb-1">PROFESSIONAL BIO SUMMARY:</label>
-            <textarea
-              rows={4}
-              required
-              value={formData.summary}
-              onChange={e => setFormData({ ...formData, summary: e.target.value })}
-              className="w-full p-3 rounded-xl bg-slate-900 border border-slate-800 text-white focus:outline-none focus:border-cyan-400 leading-relaxed resize-y font-sans text-xs"
-            />
+        {/* ── Section 03: Bio & Summary ── */}
+        <div style={CARD_STYLE}>
+          <div style={SECTION_TITLE}>
+            <Sparkles size={15} style={{ color: '#fbbf24' }} /> 03 — Bio & Professional Summary
           </div>
-
-          <div>
-            <label className="block text-slate-400 mb-1">ACADEMIC ALIGNMENT SUMMARY:</label>
-            <textarea
-              rows={2}
-              value={formData.academicFocus}
-              onChange={e => setFormData({ ...formData, academicFocus: e.target.value })}
-              className="w-full p-3 rounded-xl bg-slate-900 border border-slate-800 text-white focus:outline-none focus:border-cyan-400 leading-relaxed resize-y font-sans text-xs"
-            />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+            <div>
+              <label style={LABEL_STYLE}>Professional Bio Summary</label>
+              <textarea required rows={4} value={formData.summary}
+                onChange={e => setFormData({ ...formData, summary: e.target.value })}
+                style={{ ...FIELD_STYLE, resize: 'vertical', lineHeight: 1.6 }}
+                onFocus={e => (e.target.style.borderColor = 'rgba(198,241,53,0.4)')}
+                onBlur={e => (e.target.style.borderColor = 'rgba(255,255,255,0.08)')} />
+            </div>
+            <div>
+              <label style={LABEL_STYLE}>Academic / Focus Summary</label>
+              <textarea rows={2} value={formData.academicFocus || ''}
+                onChange={e => setFormData({ ...formData, academicFocus: e.target.value })}
+                style={{ ...FIELD_STYLE, resize: 'vertical', lineHeight: 1.6 }}
+                onFocus={e => (e.target.style.borderColor = 'rgba(198,241,53,0.4)')}
+                onBlur={e => (e.target.style.borderColor = 'rgba(255,255,255,0.08)')} />
+            </div>
           </div>
         </div>
 
-        {/* Section 4: Resume File & Document Settings */}
-        <div className="space-y-4 pt-4 border-t border-slate-800">
-          <h3 className="font-bold text-purple-300 border-b border-slate-800 pb-2 text-sm flex items-center gap-2">
-            <FileText className="w-4 h-4 text-cyan-400" />
-            <span>[04] RESUME FILE & UPLOAD SETTINGS</span>
-          </h3>
+        {/* ── Section 04: Hero Image ── */}
+        <div style={CARD_STYLE}>
+          <div style={SECTION_TITLE}>
+            <ImageIcon size={15} style={{ color: '#C6F135' }} /> 04 — Hero Section Image
+          </div>
 
-          <div className="space-y-4">
-            <div>
-              <label className="block text-slate-400 mb-1">UPLOAD NEW RESUME PDF FILE:</label>
-              <div className="flex items-center gap-4 p-4 rounded-xl bg-slate-900 border border-dashed border-cyan-500/40">
+          <div style={{ display: 'grid', gridTemplateColumns: '160px 1fr', gap: '24px', alignItems: 'start' }}>
+            {/* Preview */}
+            <div style={{ position: 'relative' }}>
+              <div style={{
+                position: 'absolute', inset: '-2px', borderRadius: '14px',
+                background: 'linear-gradient(135deg, #C6F135 0%, transparent 50%)',
+                zIndex: 0,
+              }} />
+              <div style={{
+                position: 'relative', zIndex: 1,
+                borderRadius: '12px', overflow: 'hidden',
+                background: '#0C0C0C', aspectRatio: '3/4',
+              }}>
+                <img
+                  src={heroPreview}
+                  alt="Hero preview"
+                  style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center top', mixBlendMode: 'multiply' }}
+                  onError={e => { (e.target as HTMLImageElement).src = '/assets/images/hero_vedant.jpg'; }}
+                />
+              </div>
+              <button
+                type="button"
+                onClick={() => setPreviewOpen(true)}
+                style={{
+                  position: 'absolute', bottom: '6px', right: '6px', zIndex: 10,
+                  width: '28px', height: '28px', borderRadius: '8px',
+                  background: 'rgba(12,12,12,0.85)', border: '1px solid rgba(255,255,255,0.15)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  color: '#fff', cursor: 'pointer',
+                }}
+              >
+                <Eye size={13} />
+              </button>
+            </div>
+
+            {/* Controls */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              {/* Upload area */}
+              <div>
+                <label style={LABEL_STYLE}>Upload Photo (JPG / PNG / WebP · max 5MB)</label>
                 <input
+                  ref={heroFileRef}
                   type="file"
-                  accept=".pdf,.doc,.docx"
-                  onChange={handleFileUpload}
-                  className="hidden"
-                  id="resume-file-input"
+                  accept="image/*"
+                  onChange={handleHeroImageUpload}
+                  id="hero-image-input"
+                  style={{ display: 'none' }}
                 />
                 <label
-                  htmlFor="resume-file-input"
-                  className="px-4 py-2.5 rounded-xl bg-cyan-500/20 text-cyan-300 border border-cyan-400/50 cursor-pointer font-bold flex items-center gap-2 hover:bg-cyan-500/30 transition-all"
+                  htmlFor="hero-image-input"
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: '10px',
+                    padding: '14px 18px', borderRadius: '12px',
+                    border: '2px dashed rgba(198,241,53,0.25)',
+                    background: 'rgba(198,241,53,0.04)',
+                    cursor: 'pointer', transition: 'all 0.2s ease',
+                  }}
+                  onMouseEnter={e => {
+                    (e.currentTarget as HTMLElement).style.borderColor = 'rgba(198,241,53,0.5)';
+                    (e.currentTarget as HTMLElement).style.background = 'rgba(198,241,53,0.08)';
+                  }}
+                  onMouseLeave={e => {
+                    (e.currentTarget as HTMLElement).style.borderColor = 'rgba(198,241,53,0.25)';
+                    (e.currentTarget as HTMLElement).style.background = 'rgba(198,241,53,0.04)';
+                  }}
                 >
-                  <Upload className="w-4 h-4" />
-                  <span>CHOOSE PDF / RESUME FILE</span>
+                  <div style={{
+                    width: '36px', height: '36px', borderRadius: '10px', flexShrink: 0,
+                    background: 'rgba(198,241,53,0.12)', border: '1px solid rgba(198,241,53,0.3)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#C6F135',
+                  }}>
+                    <Upload size={16} />
+                  </div>
+                  <div>
+                    <div style={{ fontSize: '13px', fontWeight: 700, color: '#fff' }}>Click to upload new photo</div>
+                    <div style={{ fontSize: '11px', color: '#555', marginTop: '2px' }}>
+                      {heroImgStatus || 'White or light background works best with the neon frame effect'}
+                    </div>
+                  </div>
                 </label>
-                <span className="text-slate-400 text-xs">
-                  {uploadStatus || (formData.resumeUrl ? 'Custom resume file loaded' : 'No file chosen (default auto-generated resume active)')}
-                </span>
               </div>
-            </div>
 
-            <div>
-              <label className="block text-slate-400 mb-1">OR ENTER RESUME FILE URL (Google Drive / Firebase / Cloudinary):</label>
-              <div className="relative">
-                <Link className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-                <input
-                  type="text"
-                  placeholder="https://drive.google.com/... or https://example.com/resume.pdf"
-                  value={formData.resumeUrl || ''}
-                  onChange={e => setFormData({ ...formData, resumeUrl: e.target.value })}
-                  className="w-full pl-10 pr-4 py-3 rounded-xl bg-slate-900 border border-slate-800 text-white focus:outline-none focus:border-cyan-400"
-                />
+              {/* OR URL */}
+              <div>
+                <label style={LABEL_STYLE}>Or Enter Image URL</label>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <div style={{ position: 'relative', flex: 1 }}>
+                    <Link size={13} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#444' }} />
+                    <input
+                      style={{ ...FIELD_STYLE, paddingLeft: '36px' }}
+                      type="text"
+                      placeholder="https://example.com/photo.jpg"
+                      value={typeof formData.heroImage === 'string' && formData.heroImage.startsWith('http') ? formData.heroImage : ''}
+                      onChange={e => handleHeroUrlChange(e.target.value)}
+                      onFocus={e => (e.target.style.borderColor = 'rgba(198,241,53,0.4)')}
+                      onBlur={e => (e.target.style.borderColor = 'rgba(255,255,255,0.08)')}
+                    />
+                  </div>
+                  {formData.heroImage && (
+                    <button type="button" onClick={clearHeroImage}
+                      style={{
+                        padding: '0 14px', borderRadius: '10px', flexShrink: 0,
+                        background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)',
+                        color: '#ef4444', cursor: 'pointer', display: 'flex', alignItems: 'center',
+                      }}
+                      title="Clear hero image">
+                      <X size={14} />
+                    </button>
+                  )}
+                </div>
+                <p style={{ fontSize: '11px', color: '#444', marginTop: '6px' }}>
+                  Leave empty to use the default <code style={{ color: '#555' }}>/assets/images/hero_vedant.jpg</code>
+                </p>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Section 5: Security & Admin Login Password */}
-        <div className="space-y-4 pt-4 border-t border-slate-800">
-          <h3 className="font-bold text-purple-300 border-b border-slate-800 pb-2 text-sm flex items-center gap-2">
-            <Key className="w-4 h-4 text-emerald-400" />
-            <span>[05] ADMIN LOGIN & PASSWORD SECURITY</span>
-          </h3>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {/* ── Section 05: Resume ── */}
+        <div style={CARD_STYLE}>
+          <div style={SECTION_TITLE}>
+            <FileText size={15} style={{ color: '#a78bfa' }} /> 05 — Resume File & Upload
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
             <div>
-              <label className="block text-slate-400 mb-1">AUTHORIZED ADMIN EMAIL / ID:</label>
-              <input
-                type="email"
-                required
+              <label style={LABEL_STYLE}>Upload Resume PDF</label>
+              <input type="file" accept=".pdf,.doc,.docx" onChange={handleResumeUpload} id="resume-file-input" style={{ display: 'none' }} />
+              <label htmlFor="resume-file-input" style={{
+                display: 'inline-flex', alignItems: 'center', gap: '8px',
+                padding: '10px 18px', borderRadius: '10px',
+                background: 'rgba(167,139,250,0.1)', border: '1px solid rgba(167,139,250,0.3)',
+                color: '#a78bfa', fontSize: '13px', fontWeight: 600, cursor: 'pointer',
+              }}>
+                <Upload size={14} /> Choose PDF File
+              </label>
+              {resumeStatus && <span style={{ fontSize: '12px', color: '#C6F135', marginLeft: '12px' }}>{resumeStatus}</span>}
+            </div>
+            <div>
+              <label style={LABEL_STYLE}>Or Enter Resume URL (Google Drive / Dropbox)</label>
+              <input style={FIELD_STYLE} type="text"
+                placeholder="https://drive.google.com/..."
+                value={typeof formData.resumeUrl === 'string' && formData.resumeUrl.startsWith('http') ? formData.resumeUrl : ''}
+                onChange={e => setFormData({ ...formData, resumeUrl: e.target.value })}
+                onFocus={e => (e.target.style.borderColor = 'rgba(198,241,53,0.4)')}
+                onBlur={e => (e.target.style.borderColor = 'rgba(255,255,255,0.08)')} />
+            </div>
+          </div>
+        </div>
+
+        {/* ── Section 06: Admin Security ── */}
+        <div style={CARD_STYLE}>
+          <div style={SECTION_TITLE}>
+            <Key size={15} style={{ color: '#fbbf24' }} /> 06 — Admin Login & Security
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
+            <div>
+              <label style={LABEL_STYLE}>Admin Email</label>
+              <input style={{ ...FIELD_STYLE, color: '#C6F135' }} type="email" required
                 value={adminCreds.email}
                 onChange={e => setAdminCreds({ ...adminCreds, email: e.target.value })}
-                className="w-full p-3 rounded-xl bg-slate-900 border border-slate-800 text-emerald-300 font-mono focus:outline-none focus:border-purple-400"
-              />
+                onFocus={e => (e.target.style.borderColor = 'rgba(198,241,53,0.4)')}
+                onBlur={e => (e.target.style.borderColor = 'rgba(255,255,255,0.08)')} />
             </div>
-
             <div>
-              <label className="block text-slate-400 mb-1">AUTHORIZED ADMIN PASSWORD:</label>
-              <input
-                type="text"
-                required
+              <label style={LABEL_STYLE}>Admin Password</label>
+              <input style={{ ...FIELD_STYLE, color: '#C6F135' }} type="text" required
                 value={adminCreds.password}
                 onChange={e => setAdminCreds({ ...adminCreds, password: e.target.value })}
-                className="w-full p-3 rounded-xl bg-slate-900 border border-slate-800 text-emerald-300 font-mono focus:outline-none focus:border-purple-400"
-              />
+                onFocus={e => (e.target.style.borderColor = 'rgba(198,241,53,0.4)')}
+                onBlur={e => (e.target.style.borderColor = 'rgba(255,255,255,0.08)')} />
             </div>
           </div>
         </div>
 
-        {/* Action Button */}
-        <div className="pt-4 border-t border-slate-800 flex justify-end">
-          <button
-            type="submit"
-            className="px-6 py-3.5 rounded-xl bg-gradient-to-r from-purple-600 to-cyan-500 text-white font-mono font-bold text-xs uppercase tracking-wider flex items-center gap-2 shadow-neon-purple hover:scale-[1.02] transition-all"
+        {/* Save button */}
+        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+          <button type="submit" style={{
+            display: 'flex', alignItems: 'center', gap: '8px',
+            padding: '13px 28px', borderRadius: '12px',
+            background: '#C6F135', border: 'none',
+            color: '#0C0C0C', fontSize: '14px', fontWeight: 700,
+            cursor: 'pointer', fontFamily: "'Inter', sans-serif",
+            transition: 'all 0.2s ease',
+          }}
+            onMouseEnter={e => (e.currentTarget.style.background = '#d4ff3d')}
+            onMouseLeave={e => (e.currentTarget.style.background = '#C6F135')}
           >
-            <Save className="w-4 h-4" />
-            <span>SAVE PROFILE & SECURITY SETTINGS</span>
+            <Save size={15} /> Save All Changes
           </button>
         </div>
-
       </form>
+
+      {/* Full-size preview modal */}
+      {previewOpen && (
+        <div
+          onClick={() => setPreviewOpen(false)}
+          style={{
+            position: 'fixed', inset: 0, zIndex: 1000,
+            background: 'rgba(0,0,0,0.92)', backdropFilter: 'blur(16px)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px',
+          }}
+        >
+          <div style={{ position: 'relative', maxWidth: '400px', width: '100%' }}>
+            <img src={heroPreview} alt="Hero preview full"
+              style={{ width: '100%', borderRadius: '20px', border: '2px solid rgba(198,241,53,0.4)' }}
+              onError={e => { (e.target as HTMLImageElement).src = '/assets/images/hero_vedant.jpg'; }}
+            />
+            <button onClick={() => setPreviewOpen(false)} style={{
+              position: 'absolute', top: '12px', right: '12px',
+              width: '32px', height: '32px', borderRadius: '50%',
+              background: 'rgba(12,12,12,0.8)', border: '1px solid rgba(255,255,255,0.15)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              color: '#fff', cursor: 'pointer',
+            }}>
+              <X size={15} />
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

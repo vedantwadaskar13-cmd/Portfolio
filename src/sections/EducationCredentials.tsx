@@ -1,109 +1,139 @@
-import React from 'react';
-import { motion } from 'framer-motion';
-import { GraduationCap, Award, Calendar, MapPin, CheckCircle2, ShieldCheck } from 'lucide-react';
+import React, { useEffect, useRef } from 'react';
+import { GraduationCap, Award, ExternalLink, Calendar, MapPin } from 'lucide-react';
 import { RESUME_DATA } from '../data/resumeData';
 
+function useReveal(threshold = 0.08) {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = ref.current; if (!el) return;
+    const obs = new IntersectionObserver(([e]) => {
+      if (e.isIntersecting) { el.classList.add('visible'); obs.disconnect(); }
+    }, { threshold });
+    obs.observe(el); return () => obs.disconnect();
+  }, []);
+  return ref;
+}
+
 export const EducationCredentials: React.FC = () => {
+  const { education, certifications } = RESUME_DATA;
+  const ref = useReveal();
+
   return (
-    <section id="education" className="relative py-28 overflow-hidden">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        
-        {/* Heading */}
-        <div className="flex flex-col items-center text-center space-y-3 mb-16">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full glass-hud border border-cyan-500/30 font-mono text-xs text-cyan-400 tracking-widest uppercase">
-            <GraduationCap className="w-3.5 h-3.5" />
-            <span>ACADEMICS & CREDENTIALS</span>
-          </div>
-          <h2 className="font-display font-extrabold text-3xl sm:text-5xl text-white tracking-tight">
-            EDUCATION & <span className="bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 via-emerald-400 to-purple-400">CERTIFICATIONS</span>
-          </h2>
-          <p className="text-slate-400 text-sm max-w-xl font-mono">
-            Mechanical Engineering degree curriculum combined with verified professional machine learning & AI certifications.
-          </p>
+    <section id="education" className="section-agency">
+      <div className="container-agency">
+        {/* Header */}
+        <div ref={ref} className="reveal" style={{ marginBottom: '56px' }}>
+          <div className="section-tag">Learning</div>
+          <h2 className="section-heading">Education &amp; Certifications</h2>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          
-          {/* Left Column: Education */}
-          <div className="lg:col-span-7 space-y-6">
-            <div className="flex items-center gap-2 font-mono text-xs text-cyan-400 font-semibold uppercase tracking-wider mb-4">
-              <GraduationCap className="w-4 h-4" />
-              <span>ACADEMIC DEGREES</span>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: '1fr 1fr',
+            gap: 'clamp(32px, 5vw, 64px)',
+          }}
+        >
+          {/* Left: Education */}
+          <div>
+            <div style={{
+              fontSize: '11px', fontWeight: 700, letterSpacing: '0.16em',
+              textTransform: 'uppercase', color: 'var(--text-muted)',
+              marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px',
+            }}>
+              <GraduationCap size={14} style={{ color: 'var(--accent)' }} /> Education
             </div>
-
-            {RESUME_DATA.education.map((edu, idx) => (
-              <motion.div
-                key={edu.id}
-                initial={{ opacity: 0, x: -30 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: idx * 0.15 }}
-                className="p-6 rounded-2xl glass-hud border border-cyan-500/30 glass-hud-hover hud-corner-box space-y-3"
-              >
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <h3 className="font-display font-bold text-xl text-white">{edu.degree}</h3>
-                  <span className="px-3 py-1 rounded-full font-mono text-xs bg-cyan-500/20 text-cyan-300 border border-cyan-400/40">
-                    {edu.period}
-                  </span>
-                </div>
-
-                <div className="font-mono text-sm text-cyan-400 font-medium">{edu.institution}</div>
-
-                <div className="flex items-center gap-2 font-mono text-xs text-slate-400">
-                  <MapPin className="w-3.5 h-3.5 text-purple-400" />
-                  <span>{edu.location}</span>
-                </div>
-
-                <p className="text-slate-300 text-xs sm:text-sm pt-2 border-t border-slate-800">
-                  {edu.field}
-                </p>
-              </motion.div>
-            ))}
-          </div>
-
-          {/* Right Column: Certifications */}
-          <div className="lg:col-span-5 space-y-6">
-            <div className="flex items-center gap-2 font-mono text-xs text-emerald-400 font-semibold uppercase tracking-wider mb-4">
-              <Award className="w-4 h-4" />
-              <span>VERIFIED CERTIFICATIONS</span>
-            </div>
-
-            {RESUME_DATA.certifications.map((cert, idx) => (
-              <motion.div
-                key={cert.id}
-                initial={{ opacity: 0, x: 30 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: idx * 0.15 }}
-                className="p-6 rounded-2xl glass-hud border border-emerald-500/30 glass-hud-hover space-y-3 flex items-start gap-4"
-              >
-                <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-400/30 text-emerald-400 shrink-0">
-                  <ShieldCheck className="w-6 h-6" />
-                </div>
-
-                <div className="space-y-1">
-                  <h4 className="font-display font-bold text-lg text-white">{cert.title}</h4>
-                  <div className="font-mono text-xs text-emerald-400 font-semibold">{cert.issuer}</div>
-                  <div className="font-mono text-[11px] text-slate-400 flex items-center gap-1.5 pt-1">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                    <span>{cert.date}</span>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              {education.map((edu, i) => (
+                <div key={edu.id} className="card-agency" style={{ padding: '24px' }}>
+                  <div style={{ display: 'flex', gap: '16px', alignItems: 'flex-start' }}>
+                    <div style={{
+                      width: '40px', height: '40px', borderRadius: '10px', flexShrink: 0,
+                      background: 'var(--accent-dim)', border: '1px solid var(--accent-border)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      color: 'var(--accent)',
+                    }}>
+                      <GraduationCap size={16} />
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <h3 style={{ fontSize: '15px', fontWeight: 700, color: 'var(--text-h)', marginBottom: '4px' }}>
+                        {edu.degree}
+                      </h3>
+                      <div style={{ fontSize: '13px', color: 'var(--accent)', fontWeight: 600, marginBottom: '10px' }}>
+                        {edu.institution}
+                      </div>
+                      <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', marginBottom: '10px' }}>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px', color: 'var(--text-b)' }}>
+                          <Calendar size={11} /> {edu.period}
+                        </span>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px', color: 'var(--text-b)' }}>
+                          <MapPin size={11} /> {edu.location}
+                        </span>
+                      </div>
+                      <span style={{
+                        display: 'inline-block', padding: '4px 10px',
+                        borderRadius: '6px', fontSize: '11px',
+                        background: 'var(--accent-dim)', border: '1px solid var(--accent-border)',
+                        color: 'var(--accent)',
+                      }}>
+                        {edu.field}
+                      </span>
+                    </div>
                   </div>
                 </div>
-              </motion.div>
-            ))}
-
-            {/* Resume Summary Telemetry Box */}
-            <div className="p-6 rounded-2xl glass-hud border border-purple-500/30 bg-purple-950/20 text-slate-300 font-mono text-xs space-y-2">
-              <span className="text-purple-300 font-semibold uppercase">// VERIFICATION_LOG</span>
-              <p className="leading-relaxed">
-                All credentials verified via official course completion records and institutional enrollment at PVG College of Engineering, Pune.
-              </p>
+              ))}
             </div>
           </div>
 
+          {/* Right: Certifications */}
+          <div>
+            <div style={{
+              fontSize: '11px', fontWeight: 700, letterSpacing: '0.16em',
+              textTransform: 'uppercase', color: 'var(--text-muted)',
+              marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px',
+            }}>
+              <Award size={14} style={{ color: 'var(--accent)' }} /> Certifications
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {certifications.map((cert, i) => (
+                <div key={cert.id} className="card-agency" style={{ padding: '20px 22px', display: 'flex', gap: '14px', alignItems: 'center' }}>
+                  <div style={{
+                    width: '38px', height: '38px', borderRadius: '50%', flexShrink: 0,
+                    background: 'var(--accent-dim)', border: '1px solid var(--accent-border)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    color: 'var(--accent)',
+                  }}>
+                    <Award size={16} />
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text-h)', marginBottom: '3px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {cert.title}
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontSize: '12px', color: 'var(--accent)', fontWeight: 600 }}>{cert.issuer}</span>
+                      {cert.date && <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{cert.date}</span>}
+                    </div>
+                  </div>
+                  {cert.credentialUrl && (
+                    <a href={cert.credentialUrl} target="_blank" rel="noreferrer"
+                      style={{ color: 'var(--text-muted)', transition: 'color 0.2s ease', flexShrink: 0 }}
+                      onMouseEnter={e => (e.currentTarget.style.color = 'var(--accent)')}
+                      onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-muted)')}>
+                      <ExternalLink size={14} />
+                    </a>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
-
       </div>
+
+      <style>{`
+        @media (max-width: 768px) {
+          #education > div > div:last-child { grid-template-columns: 1fr !important; }
+        }
+      `}</style>
     </section>
   );
 };

@@ -1,159 +1,203 @@
-import React from 'react';
-import { motion } from 'framer-motion';
-import { Cpu, Brain, Database, Wrench, Award, Compass, Code, Layers } from 'lucide-react';
+import React, { useEffect, useRef } from 'react';
+import { CheckCircle, Download, Code2, Database, Brain, Cpu, Wrench } from 'lucide-react';
 import { usePortfolio } from '../context/PortfolioContext';
 
-export const AboutSection: React.FC = () => {
-  const { personal, projects } = usePortfolio();
-  const { summary, academicFocus } = personal;
+function useReveal() {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = ref.current; if (!el) return;
+    const obs = new IntersectionObserver(
+      ([e]) => { if (e.isIntersecting) { el.classList.add('visible'); obs.disconnect(); } },
+      { threshold: 0.08 }
+    );
+    obs.observe(el); return () => obs.disconnect();
+  }, []);
+  return ref;
+}
 
-  const coreFocusAreas = [
-    {
-      icon: Brain,
-      title: 'AI/ML & Generative AI',
-      desc: 'Building classification algorithms, recommendation clustering, NLP webhooks with Dialogflow, and multi-tool LLM agents (LangChain & Mistral AI).',
-      color: 'text-cyan-400',
-      border: 'border-cyan-500/30'
-    },
-    {
-      icon: Database,
-      title: 'Data Analytics & SQL',
-      desc: 'Exploratory Data Analysis (EDA) using Pandas, NumPy, Matplotlib & Seaborn, combined with SQL stored procedures and Power BI dashboards.',
-      color: 'text-emerald-400',
-      border: 'border-emerald-500/30'
-    },
-    {
-      icon: Wrench,
-      title: 'Mechanical Engineering & CAD',
-      desc: 'B.E. Mechanical (2027 passout) with hands-on CAD modeling & simulation skills in SolidWorks, ANSYS, and CATIA applied to autonomous field robotics.',
-      color: 'text-purple-400',
-      border: 'border-purple-500/30'
-    },
-    {
-      icon: Code,
-      title: 'Full-Stack Integration',
-      desc: 'Developing end-to-end applications connecting React user interfaces with Python/FastAPI microservices, Node.js, SQLite, and MySQL databases.',
-      color: 'text-amber-400',
-      border: 'border-amber-500/30'
-    }
-  ];
+const CHECKLIST = [
+  'Detail oriented & precise',
+  'Systems-first thinker',
+  'Fast learner & adapter',
+  'Impact-driven mindset',
+];
+
+const TECH_STACK = [
+  { label: 'Python',     initial: 'Py',  color: '#3776AB' },
+  { label: 'React',      initial: 'Re',  color: '#61DAFB' },
+  { label: 'FastAPI',    initial: 'FA',  color: '#009688' },
+  { label: 'SQL',        initial: 'Sq',  color: '#336791' },
+  { label: 'Power BI',   initial: 'BI',  color: '#F2C811' },
+  { label: 'SolidWorks', initial: 'SW',  color: '#FF3D00' },
+  { label: 'LangChain',  initial: 'LC',  color: '#C6F135' },
+  { label: 'Firebase',   initial: 'Fb',  color: '#FFA000' },
+];
+
+export const AboutSection: React.FC = () => {
+  const { personal } = usePortfolio();
+  const { name, summary, academicFocus, heroImage } = personal;
+  const leftRef = useReveal();
+  const rightRef = useReveal();
 
   return (
-    <section id="about" className="relative py-28 overflow-hidden">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        
-        {/* Section Heading */}
-        <div className="flex flex-col items-center text-center space-y-3 mb-16">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full glass-hud border border-cyan-500/30 font-mono text-xs text-cyan-400 tracking-widest uppercase">
-            <Layers className="w-3.5 h-3.5" />
-            <span>CORE_PROFILE // TELEMETRY</span>
+    <section id="about" className="section-agency">
+      <div className="container-agency">
+
+        {/* ── 2-col layout ── */}
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: '1fr 1.2fr',
+          gap: 'clamp(40px, 6vw, 80px)',
+          alignItems: 'center',
+          marginBottom: 'clamp(40px, 5vw, 64px)',
+        }}>
+
+          {/* LEFT: Portrait */}
+          <div ref={leftRef} className="reveal">
+            <div style={{ position: 'relative', maxWidth: '420px' }}>
+              {/* Neon lime gradient border */}
+              <div style={{
+                position: 'absolute', inset: '-2px', borderRadius: '24px',
+                background: 'linear-gradient(150deg, var(--accent) 0%, transparent 40%, rgba(198,241,53,0.2) 100%)',
+                zIndex: 0,
+              }} />
+              <div style={{
+                position: 'absolute', inset: '2px', borderRadius: '22px',
+                background: 'var(--bg-card)', zIndex: 1, overflow: 'hidden',
+              }}>
+                <img
+                  src={heroImage || '/assets/images/hero_vedant.jpg'}
+                  alt={name || 'Vedant Wadaskar'}
+                  style={{
+                    width: '100%',
+                    aspectRatio: '4/5',
+                    objectFit: 'cover',
+                    objectPosition: 'center top',
+                    display: 'block',
+                  }}
+                />
+              </div>
+
+              {/* Floating experience badge */}
+              <div style={{
+                position: 'absolute', bottom: '-16px', left: '-16px', zIndex: 10,
+                background: 'var(--bg-card)', border: '1px solid var(--border)',
+                borderRadius: '14px', padding: '14px 18px',
+                backdropFilter: 'blur(20px)',
+                boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+              }}>
+                <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: '28px', color: 'var(--text-h)', lineHeight: 1 }}>
+                  B.E.
+                </div>
+                <div style={{ fontSize: '11px', color: 'var(--text-b)', letterSpacing: '0.08em', textTransform: 'uppercase', marginTop: '4px' }}>
+                  Mech. Eng. Student
+                </div>
+              </div>
+            </div>
           </div>
-          <h2 className="font-display font-extrabold text-3xl sm:text-5xl text-white tracking-tight">
-            ENGINEERING x <span className="bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 via-emerald-400 to-purple-400">AI PARADIGM</span>
-          </h2>
-          <div className="w-24 h-1 bg-gradient-to-r from-cyan-500 to-emerald-400 rounded-full" />
-        </div>
 
-        {/* Top Split Layout: Professional Bio & Fact Metrics */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-stretch mb-14">
-          
-          {/* Main Professional Summary Box */}
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-            className="lg:col-span-8 p-8 rounded-2xl glass-hud border border-cyan-500/30 hud-corner-box flex flex-col justify-between"
-          >
-            <div className="space-y-4">
-              <div className="flex items-center justify-between border-b border-slate-800 pb-3 font-mono text-xs text-cyan-400">
-                <span>// SUMMARY_LOG</span>
-                <span>SYSTEM_STATUS: ACTIVE</span>
-              </div>
-              <p className="text-slate-200 text-base sm:text-lg leading-relaxed font-sans">
-                {summary}
-              </p>
-              <div className="p-4 rounded-xl bg-slate-900/60 border border-slate-800 text-slate-300 text-sm font-mono leading-normal">
-                <span className="text-cyan-400 font-semibold">ACADEMIC ALIGNMENT: </span>
+          {/* RIGHT: Bio */}
+          <div ref={rightRef} className="reveal reveal-delay-1">
+            <div className="section-tag">About Me</div>
+            <h2 className="section-heading" style={{ marginBottom: '20px' }}>
+              The Engineer<br />Behind the Code
+            </h2>
+
+            <p style={{ fontSize: '15px', color: 'var(--text-b)', lineHeight: 1.75, marginBottom: '16px' }}>
+              {summary
+                ? summary.slice(0, 280) + (summary.length > 280 ? '...' : '')
+                : 'AI/ML Engineer with hands-on experience building machine learning models, chatbots, and full-stack data-driven applications.'}
+            </p>
+
+            {academicFocus && (
+              <p style={{ fontSize: '14px', color: 'var(--text-muted)', lineHeight: 1.7, marginBottom: '28px' }}>
                 {academicFocus}
-              </div>
-            </div>
+              </p>
+            )}
 
-            <div className="pt-6 mt-6 border-t border-slate-800 flex flex-wrap gap-4 font-mono text-xs text-slate-400">
-              <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-cyan-400" /> Python / C++ / SQL</span>
-              <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-emerald-400" /> LangChain / Mistral AI</span>
-              <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-purple-400" /> SolidWorks / ANSYS</span>
-            </div>
-          </motion.div>
-
-          {/* Resume Metric Counter Cards */}
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6, delay: 0.2 }}
-            className="lg:col-span-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-4"
-          >
-            <div className="p-6 rounded-2xl glass-hud border border-cyan-500/30 flex items-center gap-5">
-              <div className="p-3.5 rounded-xl bg-cyan-500/10 border border-cyan-400/30 text-cyan-400">
-                <Brain className="w-8 h-8" />
-              </div>
-              <div>
-                <div className="font-display font-extrabold text-3xl text-white">
-                  {String(projects.length).padStart(2, '0')}
+            {/* Checklist */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px 24px', marginBottom: '32px' }}>
+              {CHECKLIST.map(item => (
+                <div key={item} style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <CheckCircle size={15} style={{ color: 'var(--accent)', flexShrink: 0 }} />
+                  <span style={{ fontSize: '14px', color: 'var(--text-b)' }}>{item}</span>
                 </div>
-                <div className="font-mono text-xs text-slate-400 uppercase tracking-wider">Major AI Systems Built</div>
-              </div>
+              ))}
             </div>
 
-            <div className="p-6 rounded-2xl glass-hud border border-emerald-500/30 flex items-center gap-5">
-              <div className="p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-400/30 text-emerald-400">
-                <Award className="w-8 h-8" />
-              </div>
-              <div>
-                <div className="font-display font-extrabold text-3xl text-white">02</div>
-                <div className="font-mono text-xs text-slate-400 uppercase tracking-wider">IBM & Tata Certifications</div>
-              </div>
-            </div>
-
-            <div className="p-6 rounded-2xl glass-hud border border-purple-500/30 flex items-center gap-5">
-              <div className="p-3.5 rounded-xl bg-purple-500/10 border border-purple-400/30 text-purple-400">
-                <Cpu className="w-8 h-8" />
-              </div>
-              <div>
-                <div className="font-display font-extrabold text-3xl text-white">2027</div>
-                <div className="font-mono text-xs text-slate-400 uppercase tracking-wider">B.E. Mechanical Passout</div>
-              </div>
-            </div>
-          </motion.div>
+            {/* Download CV CTA */}
+            <a
+              href="/assets/Vedant_Wadaskar_Resume.pdf"
+              target="_blank"
+              rel="noreferrer"
+              className="neon-btn"
+              style={{ display: 'inline-flex', textDecoration: 'none' }}
+            >
+              <Download size={15} /> Download CV
+            </a>
+          </div>
         </div>
 
-        {/* Focus Areas Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {coreFocusAreas.map((area, idx) => {
-            const IconComp = area.icon;
-            return (
-              <motion.div
-                key={idx}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: idx * 0.1 }}
-                className={`p-6 rounded-2xl glass-hud border ${area.border} glass-hud-hover flex flex-col justify-between`}
+        {/* ── Tech Stack Badges Row ── */}
+        <div style={{
+          borderTop: '1px solid var(--border)',
+          paddingTop: '40px',
+        }}>
+          <div style={{
+            fontSize: '11px', fontWeight: 700, letterSpacing: '0.16em',
+            textTransform: 'uppercase', color: 'var(--text-muted)',
+            marginBottom: '20px', textAlign: 'center',
+          }}>
+            Technologies I Work With
+          </div>
+          <div style={{
+            display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '12px',
+          }}>
+            {TECH_STACK.map(tech => (
+              <div
+                key={tech.label}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: '8px',
+                  padding: '10px 18px', borderRadius: '12px',
+                  background: 'var(--bg-card)', border: '1px solid var(--border)',
+                  transition: 'all 0.2s ease', cursor: 'default',
+                }}
+                onMouseEnter={e => {
+                  (e.currentTarget as HTMLElement).style.borderColor = 'var(--accent-border)';
+                  (e.currentTarget as HTMLElement).style.background = 'var(--accent-dim)';
+                }}
+                onMouseLeave={e => {
+                  (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)';
+                  (e.currentTarget as HTMLElement).style.background = 'var(--bg-card)';
+                }}
               >
-                <div className="space-y-3">
-                  <div className={`p-3 rounded-xl bg-slate-900/80 w-fit ${area.color}`}>
-                    <IconComp className="w-6 h-6" />
-                  </div>
-                  <h3 className="font-display font-bold text-lg text-white">{area.title}</h3>
-                  <p className="text-slate-400 text-xs sm:text-sm leading-relaxed">{area.desc}</p>
-                </div>
-              </motion.div>
-            );
-          })}
+                {/* Color dot */}
+                <span style={{
+                  width: '8px', height: '8px', borderRadius: '50%',
+                  background: tech.color, flexShrink: 0,
+                  boxShadow: `0 0 8px ${tech.color}66`,
+                }} />
+                <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-h)' }}>
+                  {tech.label}
+                </span>
+              </div>
+            ))}
+          </div>
         </div>
 
       </div>
+
+      <style>{`
+        @media (max-width: 768px) {
+          #about > div > div:first-child {
+            grid-template-columns: 1fr !important;
+          }
+          #about > div > div:first-child > div:first-child {
+            max-width: 280px !important;
+            margin: 0 auto;
+          }
+        }
+      `}</style>
     </section>
   );
 };

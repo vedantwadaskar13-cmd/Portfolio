@@ -1,117 +1,278 @@
 import React, { useState, useEffect } from 'react';
-import { Mail, FolderGit2, Briefcase, Cpu, Trash2, CheckCircle2, ShieldAlert } from 'lucide-react';
+import { Mail, FolderGit2, Briefcase, Cpu, Trash2, CheckCircle2, Clock, TrendingUp } from 'lucide-react';
 import { RESUME_DATA } from '../data/resumeData';
 import { fetchContactMessages } from '../services/firebase';
 
+const STAT_CARDS = [
+  {
+    label: 'Active Projects',
+    value: RESUME_DATA.projects.length,
+    Icon: FolderGit2,
+    color: '#C6F135',
+    bg: 'rgba(198,241,53,0.1)',
+  },
+  {
+    label: 'Work History',
+    value: RESUME_DATA.experience.length,
+    Icon: Briefcase,
+    color: '#60a5fa',
+    bg: 'rgba(96,165,250,0.1)',
+  },
+  {
+    label: 'Skill Modules',
+    value: RESUME_DATA.skills.reduce((a, c) => a + c.skills.length, 0),
+    Icon: Cpu,
+    color: '#a78bfa',
+    bg: 'rgba(167,139,250,0.1)',
+  },
+  {
+    label: 'Inbox Messages',
+    value: 0, // will update dynamically
+    Icon: Mail,
+    color: '#fbbf24',
+    bg: 'rgba(251,191,36,0.1)',
+    dynamic: true,
+  },
+];
+
 export const AdminDashboard: React.FC = () => {
   const [messages, setMessages] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Read saved messages from Cloud Database / Firestore / localStorage
     fetchContactMessages().then(msgs => {
       setMessages(msgs);
+      setLoading(false);
     });
   }, []);
 
-  const handleDeleteMessage = (id: string) => {
+  const handleDelete = (id: string) => {
     const updated = messages.filter(m => m.id !== id);
     setMessages(updated);
     localStorage.setItem('contact_messages', JSON.stringify(updated));
   };
 
   return (
-    <div className="space-y-8 font-sans">
-      {/* Top Stat Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 font-mono">
-        <div className="p-6 rounded-2xl glass-hud border border-cyan-500/30 flex items-center justify-between">
-          <div>
-            <div className="text-slate-400 text-xs uppercase">ACTIVE PROJECTS</div>
-            <div className="font-display font-bold text-3xl text-white mt-1">{RESUME_DATA.projects.length}</div>
-          </div>
-          <div className="p-3 rounded-xl bg-cyan-500/10 text-cyan-400">
-            <FolderGit2 className="w-6 h-6" />
-          </div>
-        </div>
+    <div style={{ maxWidth: '1100px' }}>
+      {/* Header */}
+      <div style={{ marginBottom: '32px' }}>
+        <h1 style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: '28px', color: '#fff', marginBottom: '6px' }}>
+          Dashboard
+        </h1>
+        <p style={{ fontSize: '14px', color: '#555' }}>
+          Overview of your portfolio content and incoming messages.
+        </p>
+      </div>
 
-        <div className="p-6 rounded-2xl glass-hud border border-emerald-500/30 flex items-center justify-between">
-          <div>
-            <div className="text-slate-400 text-xs uppercase">WORK HISTORY</div>
-            <div className="font-display font-bold text-3xl text-white mt-1">{RESUME_DATA.experience.length}</div>
-          </div>
-          <div className="p-3 rounded-xl bg-emerald-500/10 text-emerald-400">
-            <Briefcase className="w-6 h-6" />
-          </div>
-        </div>
-
-        <div className="p-6 rounded-2xl glass-hud border border-purple-500/30 flex items-center justify-between">
-          <div>
-            <div className="text-slate-400 text-xs uppercase">SKILL MODULES</div>
-            <div className="font-display font-bold text-3xl text-white mt-1">
-              {RESUME_DATA.skills.reduce((acc, cat) => acc + cat.skills.length, 0)}
+      {/* Stat Cards */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(4, 1fr)',
+        gap: '16px',
+        marginBottom: '40px',
+      }}>
+        {STAT_CARDS.map((card, i) => (
+          <div
+            key={card.label}
+            style={{
+              background: '#141414',
+              border: '1px solid rgba(255,255,255,0.07)',
+              borderRadius: '16px',
+              padding: '22px',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'flex-start',
+              transition: 'border-color 0.2s ease',
+            }}
+            onMouseEnter={e => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.14)')}
+            onMouseLeave={e => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.07)')}
+          >
+            <div>
+              <div style={{ fontSize: '11px', fontWeight: 600, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#555', marginBottom: '10px' }}>
+                {card.label}
+              </div>
+              <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: '36px', color: '#fff', lineHeight: 1 }}>
+                {card.dynamic ? messages.length : card.value}
+              </div>
+            </div>
+            <div style={{
+              width: '40px', height: '40px', borderRadius: '12px',
+              background: card.bg, display: 'flex', alignItems: 'center', justifyContent: 'center',
+              color: card.color, flexShrink: 0,
+            }}>
+              <card.Icon size={18} />
             </div>
           </div>
-          <div className="p-3 rounded-xl bg-purple-500/10 text-purple-400">
-            <Cpu className="w-6 h-6" />
+        ))}
+      </div>
+
+      {/* Quick Info strip */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: '1fr 1fr',
+        gap: '16px',
+        marginBottom: '40px',
+      }}>
+        <div style={{
+          background: '#141414', border: '1px solid rgba(255,255,255,0.07)',
+          borderRadius: '16px', padding: '22px',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+            <TrendingUp size={16} style={{ color: '#C6F135' }} />
+            <span style={{ fontSize: '13px', fontWeight: 700, color: '#fff' }}>Portfolio Health</span>
           </div>
+          {[
+            { label: 'Projects', value: RESUME_DATA.projects.length, max: 20, color: '#C6F135' },
+            { label: 'Experience', value: RESUME_DATA.experience.length, max: 10, color: '#60a5fa' },
+            { label: 'Skills', value: RESUME_DATA.skills.reduce((a, c) => a + c.skills.length, 0), max: 40, color: '#a78bfa' },
+          ].map(item => (
+            <div key={item.label} style={{ marginBottom: '12px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+                <span style={{ fontSize: '12px', color: '#666' }}>{item.label}</span>
+                <span style={{ fontSize: '12px', fontWeight: 700, color: '#fff' }}>{item.value}</span>
+              </div>
+              <div style={{ height: '3px', background: 'rgba(255,255,255,0.06)', borderRadius: '2px' }}>
+                <div style={{
+                  height: '100%', borderRadius: '2px', background: item.color,
+                  width: `${Math.min((item.value / item.max) * 100, 100)}%`,
+                }} />
+              </div>
+            </div>
+          ))}
         </div>
 
-        <div className="p-6 rounded-2xl glass-hud border border-amber-500/30 flex items-center justify-between">
-          <div>
-            <div className="text-slate-400 text-xs uppercase">INBOX TRANSMISSIONS</div>
-            <div className="font-display font-bold text-3xl text-white mt-1">{messages.length}</div>
+        <div style={{
+          background: '#141414', border: '1px solid rgba(255,255,255,0.07)',
+          borderRadius: '16px', padding: '22px',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+            <Clock size={16} style={{ color: '#C6F135' }} />
+            <span style={{ fontSize: '13px', fontWeight: 700, color: '#fff' }}>Quick Info</span>
           </div>
-          <div className="p-3 rounded-xl bg-amber-500/10 text-amber-400">
-            <Mail className="w-6 h-6" />
-          </div>
+          {[
+            { label: 'Last Updated', value: 'Just now' },
+            { label: 'Certifications', value: RESUME_DATA.certifications?.length || 0 },
+            { label: 'Education', value: RESUME_DATA.education?.length || 0 },
+            { label: 'Contact Form', value: 'Live & Active' },
+          ].map(({ label, value }) => (
+            <div key={label} style={{
+              display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+              padding: '8px 0', borderBottom: '1px solid rgba(255,255,255,0.05)',
+            }}>
+              <span style={{ fontSize: '13px', color: '#555' }}>{label}</span>
+              <span style={{ fontSize: '13px', fontWeight: 600, color: '#fff' }}>{value}</span>
+            </div>
+          ))}
         </div>
       </div>
 
       {/* Messages Inbox */}
-      <div className="p-6 sm:p-8 rounded-2xl glass-hud border border-slate-800 space-y-6">
-        <div className="flex items-center justify-between font-mono">
-          <h3 className="font-display font-bold text-xl text-white flex items-center gap-2">
-            <Mail className="w-5 h-5 text-cyan-400" />
-            <span>TRANSMISSIONS INBOX</span>
-          </h3>
-          <span className="text-xs text-slate-400">{messages.length} Received</span>
+      <div style={{
+        background: '#141414', border: '1px solid rgba(255,255,255,0.07)',
+        borderRadius: '20px', overflow: 'hidden',
+      }}>
+        {/* Header */}
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '20px 24px', borderBottom: '1px solid rgba(255,255,255,0.07)',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <Mail size={16} style={{ color: '#C6F135' }} />
+            <span style={{ fontFamily: 'Syne, sans-serif', fontWeight: 700, fontSize: '16px', color: '#fff' }}>
+              Messages Inbox
+            </span>
+          </div>
+          <span style={{
+            padding: '3px 10px', borderRadius: '999px', fontSize: '12px', fontWeight: 700,
+            background: messages.length > 0 ? 'rgba(198,241,53,0.1)' : 'rgba(255,255,255,0.04)',
+            border: `1px solid ${messages.length > 0 ? 'rgba(198,241,53,0.3)' : 'rgba(255,255,255,0.08)'}`,
+            color: messages.length > 0 ? '#C6F135' : '#555',
+          }}>
+            {messages.length} received
+          </span>
         </div>
 
-        {messages.length === 0 ? (
-          <div className="p-8 text-center text-slate-500 font-mono text-xs border border-dashed border-slate-800 rounded-xl">
-            No transmissions received yet. Test the contact terminal on the public website to see messages appear here!
-          </div>
-        ) : (
-          <div className="space-y-4 font-mono text-xs">
-            {messages.map(msg => (
-              <div
-                key={msg.id}
-                className="p-5 rounded-xl bg-slate-900/80 border border-slate-800 flex flex-col sm:flex-row items-start justify-between gap-4"
-              >
-                <div className="space-y-1 flex-1">
-                  <div className="flex items-center gap-3">
-                    <span className="font-bold text-white text-sm">{msg.name}</span>
-                    <span className="text-cyan-400">{msg.email}</span>
-                  </div>
-                  <div className="text-slate-500 text-[10px]">
-                    Received: {new Date(msg.timestamp).toLocaleString()}
-                  </div>
-                  <p className="text-slate-300 font-sans text-xs pt-2 leading-relaxed">
-                    {msg.message}
-                  </p>
-                </div>
-
-                <button
-                  onClick={() => handleDeleteMessage(msg.id)}
-                  className="p-2 rounded-lg bg-red-950/40 border border-red-500/30 text-red-300 hover:bg-red-900/40 transition-colors shrink-0"
-                  title="Delete message"
+        {/* Body */}
+        <div style={{ padding: '8px' }}>
+          {loading ? (
+            <div style={{ padding: '48px', textAlign: 'center', color: '#444', fontSize: '14px' }}>
+              Loading messages...
+            </div>
+          ) : messages.length === 0 ? (
+            <div style={{
+              padding: '48px', textAlign: 'center', color: '#333',
+              border: '1px dashed rgba(255,255,255,0.06)', borderRadius: '14px', margin: '8px',
+              fontSize: '13px',
+            }}>
+              No messages yet — send a test message via the Contact section on the portfolio.
+            </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+              {messages.map(msg => (
+                <div key={msg.id} style={{
+                  background: '#0C0C0C', borderRadius: '12px', padding: '18px 20px',
+                  border: '1px solid rgba(255,255,255,0.05)',
+                  display: 'flex', gap: '16px', alignItems: 'flex-start',
+                  transition: 'border-color 0.2s ease',
+                }}
+                  onMouseEnter={e => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.12)')}
+                  onMouseLeave={e => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.05)')}
                 >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
+                  {/* Avatar */}
+                  <div style={{
+                    width: '40px', height: '40px', borderRadius: '50%', flexShrink: 0,
+                    background: 'rgba(198,241,53,0.1)', border: '1px solid rgba(198,241,53,0.3)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    color: '#C6F135', fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: '15px',
+                  }}>
+                    {msg.name?.[0]?.toUpperCase() || 'M'}
+                  </div>
+
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '4px' }}>
+                      <div>
+                        <span style={{ fontSize: '14px', fontWeight: 700, color: '#fff' }}>{msg.name}</span>
+                        <span style={{ fontSize: '13px', color: '#C6F135', marginLeft: '10px' }}>{msg.email}</span>
+                      </div>
+                      <span style={{ fontSize: '11px', color: '#444', flexShrink: 0 }}>
+                        {msg.timestamp ? new Date(msg.timestamp).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : ''}
+                      </span>
+                    </div>
+                    <p style={{ fontSize: '13px', color: '#888', lineHeight: 1.6, wordBreak: 'break-word' }}>
+                      {msg.message}
+                    </p>
+                  </div>
+
+                  <button
+                    onClick={() => handleDelete(msg.id)}
+                    title="Delete message"
+                    style={{
+                      width: '32px', height: '32px', borderRadius: '8px', flexShrink: 0,
+                      background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      color: '#ef4444', cursor: 'pointer', transition: 'all 0.2s ease',
+                    }}
+                    onMouseEnter={e => (e.currentTarget.style.background = 'rgba(239,68,68,0.18)')}
+                    onMouseLeave={e => (e.currentTarget.style.background = 'rgba(239,68,68,0.08)')}
+                  >
+                    <Trash2 size={13} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
+
+      <style>{`
+        @media (max-width: 900px) {
+          div[style*="repeat(4, 1fr)"] { grid-template-columns: 1fr 1fr !important; }
+        }
+        @media (max-width: 600px) {
+          div[style*="repeat(4, 1fr)"] { grid-template-columns: 1fr !important; }
+          div[style*="1fr 1fr"] { grid-template-columns: 1fr !important; }
+        }
+      `}</style>
     </div>
   );
 };

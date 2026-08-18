@@ -1,163 +1,200 @@
-import React, { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Cpu, Search } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
 import { usePortfolio } from '../context/PortfolioContext';
+
+const MARQUEE_ITEMS = [
+  'Python', 'TensorFlow', 'Scikit-Learn', 'React', 'Node.js', 'FastAPI',
+  'SQL', 'Power BI', 'SolidWorks', 'ANSYS', 'LangChain', 'Firebase',
+  'Git', 'C++', 'Pandas', 'NumPy', 'Dialogflow', 'CATIA',
+  'MySQL', 'SQLite', 'Leaflet.js', 'Express.js', 'Jupyter', 'Matplotlib',
+];
+
+// Double for seamless loop
+const MARQUEE_DOUBLED = [...MARQUEE_ITEMS, ...MARQUEE_ITEMS];
+
+const LEVEL_WIDTHS = { Expert: '90%', Advanced: '72%', Intermediate: '52%' };
+
+function useReveal() {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = ref.current; if (!el) return;
+    const obs = new IntersectionObserver(([e]) => {
+      if (e.isIntersecting) { el.classList.add('visible'); obs.disconnect(); }
+    }, { threshold: 0.08 });
+    obs.observe(el); return () => obs.disconnect();
+  }, []);
+  return ref;
+}
 
 export const SkillsConstellation: React.FC = () => {
   const { skills } = usePortfolio();
-  const [activeCategory, setActiveCategory] = useState<string>('ALL');
-  const [searchQuery, setSearchQuery] = useState<string>('');
-  const [selectedSkill, setSelectedSkill] = useState<{ name: string; level: string; tags: string[]; category: string } | null>(null);
+  const [openCat, setOpenCat] = useState<string | null>(skills[0]?.category || null);
+  const [barsTriggered, setBarsTriggered] = useState(false);
+  const rightRef = useRef<HTMLDivElement>(null);
+  const headerRef = useReveal();
 
-  const categories = ['ALL', ...skills.map(s => s.category)];
-
-  const allSkillsList = skills.flatMap(cat =>
-    cat.skills.map(skill => ({
-      ...skill,
-      category: cat.category,
-    }))
-  );
-
-  const filteredSkills = allSkillsList.filter(skill => {
-    const matchesCategory = activeCategory === 'ALL' || skill.category === activeCategory;
-    const matchesSearch =
-      skill.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      skill.tags.some(t => t.toLowerCase().includes(searchQuery.toLowerCase()));
-    return matchesCategory && matchesSearch;
-  });
+  // Trigger skill bars when section is visible
+  useEffect(() => {
+    const el = rightRef.current; if (!el) return;
+    const obs = new IntersectionObserver(([e]) => {
+      if (e.isIntersecting) { setBarsTriggered(true); obs.disconnect(); }
+    }, { threshold: 0.1 });
+    obs.observe(el); return () => obs.disconnect();
+  }, []);
 
   return (
-    <section id="skills" className="relative py-28 overflow-hidden bg-slate-950/40">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        
-        {/* Heading */}
-        <div className="flex flex-col items-center text-center space-y-3 mb-12">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full glass-hud border border-cyan-500/30 font-mono text-xs text-cyan-400 tracking-widest uppercase">
-            <Cpu className="w-3.5 h-3.5" />
-            <span>NEURAL_CAPABILITIES // MATRIX</span>
-          </div>
-          <h2 className="font-display font-extrabold text-3xl sm:text-5xl text-white tracking-tight">
-            SKILLS & <span className="bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 via-emerald-400 to-purple-400">TECHNOLOGY CONSTELLATION</span>
-          </h2>
-          <p className="text-slate-400 text-sm max-w-xl font-mono">
-            Technical competencies extracted strictly from verified experience and CAD engineering domain expertise.
-          </p>
+    <section id="skills" style={{ borderBottom: '1px solid var(--border)' }}>
+      {/* ─── Marquee ─── */}
+      <div style={{
+        borderBottom: '1px solid var(--border)',
+        paddingBlock: '20px',
+        overflow: 'hidden',
+        position: 'relative',
+      }}>
+        {/* Fade edges */}
+        <div style={{
+          position: 'absolute', left: 0, top: 0, bottom: 0, width: '80px', zIndex: 2,
+          background: 'linear-gradient(to right, var(--bg), transparent)',
+          pointerEvents: 'none',
+        }} />
+        <div style={{
+          position: 'absolute', right: 0, top: 0, bottom: 0, width: '80px', zIndex: 2,
+          background: 'linear-gradient(to left, var(--bg), transparent)',
+          pointerEvents: 'none',
+        }} />
+        <div className="marquee-track">
+          {MARQUEE_DOUBLED.map((item, i) => (
+            <div key={i} className="marquee-item">{item}</div>
+          ))}
         </div>
+      </div>
 
-        {/* Filter Controls Bar */}
-        <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-10 p-4 rounded-2xl glass-hud border border-cyan-500/20">
-          
-          {/* Category Tabs */}
-          <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
-            {categories.map((cat, idx) => (
-              <button
-                key={idx}
-                onClick={() => setActiveCategory(cat)}
-                className={`px-3.5 py-1.5 rounded-xl font-mono text-xs tracking-wider transition-all ${
-                  activeCategory === cat
-                    ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-400/50 shadow-neon-cyan'
-                    : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
-                }`}
-              >
-                {cat === 'ALL' ? 'ALL_MODULES' : cat.toUpperCase()}
-              </button>
-            ))}
+      {/* ─── Main Skills Content ─── */}
+      <div className="container-agency" style={{ paddingBlock: 'var(--section-py)' }}>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: '1fr 1.2fr',
+            gap: 'clamp(40px, 6vw, 80px)',
+            alignItems: 'start',
+          }}
+        >
+          {/* Left: heading */}
+          <div ref={headerRef} className="reveal" style={{ position: 'sticky', top: 'calc(var(--nav-h) + 24px)' }}>
+            <div className="section-tag">My Skills</div>
+            <h2 className="section-heading" style={{ marginBottom: '20px' }}>
+              Technical<br />Expertise
+            </h2>
+            <p style={{ fontSize: '15px', color: 'var(--text-b)', lineHeight: 1.7, marginBottom: '32px' }}>
+              A diverse technical toolkit spanning AI/ML, data engineering, full-stack web development,
+              and mechanical CAD — built through real projects and hands-on application.
+            </p>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+              {['Python', 'React', 'ML', 'SQL', 'CAD'].map(tag => (
+                <span key={tag} style={{
+                  padding: '5px 14px', borderRadius: '999px',
+                  border: '1px solid var(--border)',
+                  fontSize: '12px', fontWeight: 600,
+                  color: 'var(--text-b)', letterSpacing: '0.04em',
+                }}>
+                  {tag}
+                </span>
+              ))}
+            </div>
           </div>
 
-          {/* Search Bar */}
-          <div className="relative w-full md:w-64">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-            <input
-              type="text"
-              placeholder="Search tech stack..."
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 rounded-xl bg-slate-900/80 border border-slate-800 text-xs font-mono text-slate-200 focus:outline-none focus:border-cyan-400 transition-colors"
-            />
-          </div>
-        </div>
-
-        {/* Skills Grid Visualization */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          <AnimatePresence>
-            {filteredSkills.map((skill, idx) => {
-              const isSelected = selectedSkill?.name === skill.name;
+          {/* Right: accordion categories */}
+          <div ref={rightRef} style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+            {skills.map((cat, catIdx) => {
+              const isOpen = openCat === cat.category;
               return (
-                <motion.div
-                  key={skill.name}
-                  layout
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.9 }}
-                  transition={{ duration: 0.3, delay: idx * 0.03 }}
-                  onClick={() => setSelectedSkill(skill)}
-                  className={`p-5 rounded-2xl glass-hud border transition-all cursor-pointer interactive-hover ${
-                    isSelected
-                      ? 'border-cyan-400 bg-cyan-500/10 shadow-neon-cyan'
-                      : 'border-slate-800/80 hover:border-cyan-500/40 hover:bg-slate-900/70'
-                  }`}
-                >
-                  <div className="flex items-start justify-between mb-3">
-                    <div className="font-display font-bold text-base text-white">{skill.name}</div>
-                    <span
-                      className={`px-2 py-0.5 rounded-full font-mono text-[10px] uppercase font-semibold ${
-                        skill.level === 'Expert'
-                          ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
-                          : skill.level === 'Advanced'
-                          ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40'
-                          : 'bg-purple-500/20 text-purple-300 border border-purple-500/40'
-                      }`}
-                    >
-                      {skill.level}
+                <div key={cat.category} style={{
+                  borderRadius: '14px',
+                  border: `1px solid ${isOpen ? 'var(--accent-border)' : 'var(--border)'}`,
+                  background: isOpen ? 'var(--accent-dim)' : 'var(--bg-card)',
+                  overflow: 'hidden',
+                  transition: 'all 0.3s ease',
+                }}>
+                  {/* Header */}
+                  <button
+                    onClick={() => setOpenCat(isOpen ? null : cat.category)}
+                    style={{
+                      width: '100%', display: 'flex', alignItems: 'center',
+                      gap: '14px', padding: '18px 20px',
+                      background: 'none', border: 'none', cursor: 'pointer',
+                      textAlign: 'left',
+                    }}
+                  >
+                    <span style={{
+                      fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: '12px',
+                      color: 'var(--accent)', minWidth: '24px', letterSpacing: '0.04em',
+                    }}>
+                      0{catIdx + 1}
                     </span>
-                  </div>
+                    <span style={{
+                      flex: 1, fontWeight: 600, fontSize: '15px', color: 'var(--text-h)',
+                    }}>
+                      {cat.category}
+                    </span>
+                    <span style={{
+                      fontSize: '11px', color: 'var(--text-muted)',
+                      transform: isOpen ? 'rotate(180deg)' : 'none',
+                      transition: 'transform 0.3s ease',
+                    }}>
+                      ▾
+                    </span>
+                  </button>
 
-                  <div className="font-mono text-[11px] text-slate-400 mb-3">{skill.category}</div>
-
-                  <div className="flex flex-wrap gap-1.5 pt-2 border-t border-slate-800/80">
-                    {skill.tags.map((tag, tIdx) => (
-                      <span
-                        key={tIdx}
-                        className="px-2 py-0.5 rounded bg-slate-900 border border-slate-800 text-[10px] font-mono text-slate-300"
-                      >
-                        #{tag}
-                      </span>
-                    ))}
-                  </div>
-                </motion.div>
+                  {/* Skills */}
+                  {isOpen && (
+                    <div style={{ padding: '4px 20px 20px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                      {cat.skills.map(skill => (
+                        <div key={skill.name}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+                            <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-h)' }}>
+                              {skill.name}
+                            </span>
+                            <span style={{
+                              fontSize: '10px', fontWeight: 700,
+                              color: 'var(--accent)', letterSpacing: '0.1em', textTransform: 'uppercase',
+                            }}>
+                              {skill.level}
+                            </span>
+                          </div>
+                          <div className="skill-bar-track">
+                            <div
+                              className="skill-bar-fill"
+                              style={{ width: barsTriggered ? LEVEL_WIDTHS[skill.level] : '0%' }}
+                            />
+                          </div>
+                          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginTop: '6px' }}>
+                            {skill.tags.map(tag => (
+                              <span key={tag} style={{
+                                fontSize: '10px', fontWeight: 500,
+                                color: 'var(--text-b)',
+                                background: 'rgba(255,255,255,0.04)',
+                                padding: '2px 8px', borderRadius: '4px',
+                              }}>
+                                {tag}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               );
             })}
-          </AnimatePresence>
+          </div>
         </div>
-
-        {/* Selected Skill Details Modal Banner */}
-        {selectedSkill && (
-          <motion.div
-            initial={{ opacity: 0, y: 15 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="mt-8 p-6 rounded-2xl glass-hud border border-cyan-400/50 bg-cyan-950/20 flex flex-col md:flex-row items-center justify-between gap-4"
-          >
-            <div className="space-y-1">
-              <div className="flex items-center gap-3">
-                <span className="font-display font-bold text-xl text-white">{selectedSkill.name}</span>
-                <span className="font-mono text-xs px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/40">
-                  {selectedSkill.level} Competency
-                </span>
-              </div>
-              <p className="text-slate-300 text-xs font-mono">
-                Category: <span className="text-cyan-400">{selectedSkill.category}</span>
-              </p>
-            </div>
-            <button
-              onClick={() => setSelectedSkill(null)}
-              className="px-4 py-2 rounded-xl bg-slate-900 border border-slate-700 text-slate-300 font-mono text-xs hover:text-white"
-            >
-              CLOSE_TELEMETRY
-            </button>
-          </motion.div>
-        )}
-
       </div>
+
+      <style>{`
+        @media (max-width: 768px) {
+          #skills > div:last-child { grid-template-columns: 1fr !important; }
+          #skills > div:last-child > div:first-child { position: static !important; }
+        }
+      `}</style>
     </section>
   );
 };

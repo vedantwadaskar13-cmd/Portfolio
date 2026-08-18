@@ -1,108 +1,151 @@
-import React from 'react';
-import { motion } from 'framer-motion';
-import { Briefcase, Calendar, MapPin, ChevronRight } from 'lucide-react';
+import React, { useEffect, useRef } from 'react';
+import { Briefcase, MapPin, Calendar, ChevronRight } from 'lucide-react';
 import { usePortfolio } from '../context/PortfolioContext';
+
+function useReveal() {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = ref.current; if (!el) return;
+    const obs = new IntersectionObserver(([e]) => {
+      if (e.isIntersecting) { el.classList.add('visible'); obs.disconnect(); }
+    }, { threshold: 0.08 });
+    obs.observe(el); return () => obs.disconnect();
+  }, []);
+  return ref;
+}
+
+const TYPE_COLORS: Record<string, string> = {
+  'Full-time': 'rgba(198,241,53,0.15)',
+  'Internship': 'rgba(96,165,250,0.15)',
+  'Project': 'rgba(251,191,36,0.15)',
+};
+const TYPE_TEXT: Record<string, string> = {
+  'Full-time': 'var(--accent)',
+  'Internship': '#60a5fa',
+  'Project': '#fbbf24',
+};
 
 export const ExperienceTelemetry: React.FC = () => {
   const { experience } = usePortfolio();
+  const headerRef = useReveal();
 
   return (
-    <section id="experience" className="relative py-28 overflow-hidden bg-slate-950/40">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        
-        {/* Heading */}
-        <div className="flex flex-col items-center text-center space-y-3 mb-16">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full glass-hud border border-cyan-500/30 font-mono text-xs text-cyan-400 tracking-widest uppercase">
-            <Briefcase className="w-3.5 h-3.5" />
-            <span>CAREER_PROGRESSION // TELEMETRY</span>
-          </div>
-          <h2 className="font-display font-extrabold text-3xl sm:text-5xl text-white tracking-tight">
-            WORK EXPERIENCE <span className="bg-clip-text text-transparent bg-gradient-to-r from-cyan-400 via-emerald-400 to-purple-400">& INTERNSHIPS</span>
-          </h2>
-          <p className="text-slate-400 text-sm max-w-xl font-mono">
-            Practical AI/ML model development, machine learning algorithms, and autonomous field robotics engineering.
-          </p>
+    <section id="experience" className="section-agency">
+      <div className="container-agency">
+        {/* Header */}
+        <div ref={headerRef} className="reveal" style={{ marginBottom: '56px' }}>
+          <div className="section-tag">Work History</div>
+          <h2 className="section-heading">Professional Experience</h2>
         </div>
 
-        {/* Telemetry Timeline */}
-        <div className="relative max-w-4xl mx-auto">
-          {/* Vertical Glowing HUD Stream Line */}
-          <div className="absolute left-4 sm:left-1/2 top-0 bottom-0 w-0.5 bg-gradient-to-b from-cyan-500 via-emerald-400 to-purple-500 opacity-40 sm:-translate-x-1/2" />
+        {/* Timeline */}
+        <div style={{ position: 'relative', paddingLeft: '60px' }}>
+          {/* Vertical line */}
+          <div style={{
+            position: 'absolute',
+            left: '17px', top: '18px', bottom: '0',
+            width: '1px',
+            background: 'linear-gradient(to bottom, var(--accent-border) 0%, transparent 100%)',
+          }} />
 
-          <div className="space-y-12">
-            {experience.map((exp, idx) => {
-              const isEven = idx % 2 === 0;
-              return (
-                <motion.div
-                  key={exp.id}
-                  initial={{ opacity: 0, y: 30 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.6, delay: idx * 0.15 }}
-                  className={`relative flex flex-col sm:flex-row items-center gap-8 ${
-                    isEven ? 'sm:flex-row-reverse' : ''
-                  }`}
-                >
-                  {/* Central Glowing Telemetry Node */}
-                  <div className="absolute left-4 sm:left-1/2 -translate-x-1/2 w-8 h-8 rounded-full bg-slate-950 border-2 border-cyan-400 flex items-center justify-center shadow-[0_0_20px_#00f3ff] z-10">
-                    <div className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-ping" />
-                  </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
+            {experience.map((exp, i) => (
+              <div
+                key={exp.id}
+                className="card-agency"
+                style={{
+                  padding: '28px 32px',
+                  position: 'relative',
+                  opacity: 0,
+                  transform: 'translateX(-16px)',
+                  animation: `slideIn 0.5s ease ${i * 0.12}s forwards`,
+                }}
+              >
+                {/* Timeline dot */}
+                <div style={{
+                  position: 'absolute',
+                  left: '-48px', top: '20px',
+                  width: '36px', height: '36px',
+                  borderRadius: '50%',
+                  background: 'var(--accent-dim)',
+                  border: '1px solid var(--accent-border)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  color: 'var(--accent)',
+                }}>
+                  <Briefcase size={15} />
+                </div>
 
-                  {/* Card Container */}
-                  <div className={`w-full sm:w-[calc(50%-2.5rem)] pl-12 sm:pl-0 ${isEven ? 'sm:text-right' : 'sm:text-left'}`}>
-                    <div className="p-6 sm:p-8 rounded-2xl glass-hud border border-cyan-500/30 hud-corner-box space-y-4">
-                      
-                      {/* Role & Company Header */}
-                      <div className="space-y-1">
-                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full font-mono text-[10px] bg-cyan-500/20 text-cyan-300 border border-cyan-400/40">
-                          {exp.type}
-                        </div>
-                        <h3 className="font-display font-extrabold text-xl text-white mt-1">{exp.role}</h3>
-                        <div className="font-mono text-sm text-cyan-400 font-semibold">{exp.company}</div>
-                      </div>
-
-                      {/* Period & Location Telemetry */}
-                      <div className={`flex flex-wrap items-center gap-4 text-xs font-mono text-slate-400 ${isEven ? 'sm:justify-end' : 'sm:justify-start'}`}>
-                        <span className="flex items-center gap-1.5">
-                          <Calendar className="w-3.5 h-3.5 text-emerald-400" />
-                          <span>{exp.period}</span>
-                        </span>
-                        <span className="flex items-center gap-1.5">
-                          <MapPin className="w-3.5 h-3.5 text-purple-400" />
-                          <span>{exp.location}</span>
-                        </span>
-                      </div>
-
-                      {/* Resume Achievements Bullet Points */}
-                      <div className="space-y-2.5 pt-3 border-t border-slate-800 text-left">
-                        {exp.description.map((item, dIdx) => (
-                          <div key={dIdx} className="flex items-start gap-2.5 text-xs text-slate-300 leading-relaxed">
-                            <ChevronRight className="w-4 h-4 text-cyan-400 shrink-0 mt-0.5" />
-                            <span>{item}</span>
-                          </div>
-                        ))}
-                      </div>
-
-                      {/* Tech Used Pills */}
-                      <div className={`flex flex-wrap gap-1.5 pt-3 border-t border-slate-800 ${isEven ? 'sm:justify-end' : 'sm:justify-start'}`}>
-                        {exp.skillsUsed.map((skill, sIdx) => (
-                          <span
-                            key={sIdx}
-                            className="px-2.5 py-0.5 rounded bg-slate-900 border border-slate-800 text-[10px] font-mono text-emerald-300"
-                          >
-                            {skill}
-                          </span>
-                        ))}
-                      </div>
+                {/* Header row */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px', marginBottom: '16px' }}>
+                  <div>
+                    <h3 style={{ fontSize: '18px', fontWeight: 700, color: 'var(--text-h)', marginBottom: '4px' }}>
+                      {exp.role}
+                    </h3>
+                    <div style={{ fontSize: '15px', color: 'var(--accent)', fontWeight: 600 }}>
+                      {exp.company}
                     </div>
                   </div>
-                </motion.div>
-              );
-            })}
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '6px' }}>
+                    <span style={{
+                      padding: '4px 12px', borderRadius: '999px',
+                      fontSize: '11px', fontWeight: 700, letterSpacing: '0.08em',
+                      background: TYPE_COLORS[exp.type] || 'var(--accent-dim)',
+                      color: TYPE_TEXT[exp.type] || 'var(--accent)',
+                    }}>
+                      {exp.type}
+                    </span>
+                    <div style={{ display: 'flex', gap: '12px' }}>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px', color: 'var(--text-b)' }}>
+                        <Calendar size={11} /> {exp.period}
+                      </span>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px', color: 'var(--text-b)' }}>
+                        <MapPin size={11} /> {exp.location}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Divider */}
+                <div style={{ height: '1px', background: 'var(--border)', marginBottom: '16px' }} />
+
+                {/* Description */}
+                <ul style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '16px' }}>
+                  {exp.description.map((d, di) => (
+                    <li key={di} style={{ display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
+                      <ChevronRight size={14} style={{ color: 'var(--accent)', marginTop: '3px', flexShrink: 0 }} />
+                      <span style={{ fontSize: '14px', color: 'var(--text-b)', lineHeight: 1.6 }}>{d}</span>
+                    </li>
+                  ))}
+                </ul>
+
+                {/* Skills used */}
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                  {exp.skillsUsed.map(skill => (
+                    <span key={skill} style={{
+                      padding: '4px 12px', borderRadius: '6px', fontSize: '11px', fontWeight: 600,
+                      background: 'rgba(255,255,255,0.05)', border: '1px solid var(--border)',
+                      color: 'var(--text-b)',
+                    }}>
+                      {skill}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            ))}
           </div>
         </div>
-
       </div>
+
+      <style>{`
+        @keyframes slideIn {
+          from { opacity: 0; transform: translateX(-16px); }
+          to   { opacity: 1; transform: translateX(0); }
+        }
+        @media (max-width: 640px) {
+          #experience > div > div:last-child { padding-left: 48px !important; }
+          #experience > div > div:last-child > div > .card-agency > div:first-child { left: -36px !important; }
+        }
+      `}</style>
     </section>
   );
 };
