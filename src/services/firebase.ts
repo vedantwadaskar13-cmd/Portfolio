@@ -12,13 +12,17 @@ export const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID || ""
 };
 
-// Initialize Firebase safely
-const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-export const auth = getAuth(app);
-export const db = getFirestore(app);
+// Initialize Firebase safely only if valid API key is present
+const hasFirebaseKey = Boolean(firebaseConfig.apiKey && firebaseConfig.apiKey.length > 5);
+const app = hasFirebaseKey 
+  ? (!getApps().length ? initializeApp(firebaseConfig) : getApp())
+  : null;
+
+export const auth = app ? getAuth(app) : ({} as any);
+export const db = app ? getFirestore(app) : ({} as any);
 
 export function isFirebaseReady(): boolean {
-  return true; // Unconditionally ready with hardcoded fallback config
+  return hasFirebaseKey;
 }
 
 export interface ContactMessage {

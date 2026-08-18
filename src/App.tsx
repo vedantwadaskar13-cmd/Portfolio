@@ -48,7 +48,15 @@ const AppContent: React.FC = () => {
     const handleNav = () => setIsAdminMode(checkAdminRoute());
     window.addEventListener('popstate', handleNav);
     window.addEventListener('hashchange', handleNav);
-    const unsub = onAuthStateChanged(auth, user => { if (user) setAdminUser(user); });
+    let unsub = () => {};
+    try {
+      if (auth && auth.name) {
+        unsub = onAuthStateChanged(auth, user => { if (user) setAdminUser(user); });
+      }
+    } catch (err) {
+      console.warn('Auth state check skipped (local mode)');
+    }
+
     return () => {
       window.removeEventListener('popstate', handleNav);
       window.removeEventListener('hashchange', handleNav);
