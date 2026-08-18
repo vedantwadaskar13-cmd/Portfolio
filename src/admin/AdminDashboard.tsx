@@ -46,10 +46,25 @@ export const AdminDashboard: React.FC = () => {
     });
   }, []);
 
-  const handleDelete = (id: string) => {
-    const updated = messages.filter(m => m.id !== id);
+  const [editingNoteId, setEditingNoteId] = useState<string | null>(null);
+  const [noteText, setNoteText] = useState<string>('');
+
+  const handleUpdateStatus = (id: string, newStatus: 'New' | 'Contacted' | 'Closed') => {
+    const updated = messages.map(m => (m.id === id ? { ...m, leadStatus: newStatus } : m));
     setMessages(updated);
     localStorage.setItem('contact_messages', JSON.stringify(updated));
+  };
+
+  const handleSaveNote = (id: string) => {
+    const updated = messages.map(m => (m.id === id ? { ...m, adminNotes: noteText } : m));
+    setMessages(updated);
+    localStorage.setItem('contact_messages', JSON.stringify(updated));
+    setEditingNoteId(null);
+  };
+
+  const startEditNote = (msg: any) => {
+    setEditingNoteId(msg.id);
+    setNoteText(msg.adminNotes || '');
   };
 
   return (
@@ -210,53 +225,143 @@ export const AdminDashboard: React.FC = () => {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
               {messages.map(msg => (
                 <div key={msg.id} style={{
-                  background: '#0C0C0C', borderRadius: '12px', padding: '18px 20px',
+                  background: '#0C0C0C', borderRadius: '14px', padding: '18px 20px',
                   border: '1px solid rgba(255,255,255,0.05)',
                   display: 'flex', gap: '16px', alignItems: 'flex-start',
                   transition: 'border-color 0.2s ease',
+                  flexDirection: 'column',
                 }}
                   onMouseEnter={e => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.12)')}
                   onMouseLeave={e => (e.currentTarget.style.borderColor = 'rgba(255,255,255,0.05)')}
                 >
-                  {/* Avatar */}
-                  <div style={{
-                    width: '40px', height: '40px', borderRadius: '50%', flexShrink: 0,
-                    background: 'rgba(198,241,53,0.1)', border: '1px solid rgba(198,241,53,0.3)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    color: '#C6F135', fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: '15px',
-                  }}>
-                    {msg.name?.[0]?.toUpperCase() || 'M'}
-                  </div>
-
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '4px' }}>
-                      <div>
-                        <span style={{ fontSize: '14px', fontWeight: 700, color: '#fff' }}>{msg.name}</span>
-                        <span style={{ fontSize: '13px', color: '#C6F135', marginLeft: '10px' }}>{msg.email}</span>
-                      </div>
-                      <span style={{ fontSize: '11px', color: '#444', flexShrink: 0 }}>
-                        {msg.timestamp ? new Date(msg.timestamp).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : ''}
-                      </span>
-                    </div>
-                    <p style={{ fontSize: '13px', color: '#888', lineHeight: 1.6, wordBreak: 'break-word' }}>
-                      {msg.message}
-                    </p>
-                  </div>
-
-                  <button
-                    onClick={() => handleDelete(msg.id)}
-                    title="Delete message"
-                    style={{
-                      width: '32px', height: '32px', borderRadius: '8px', flexShrink: 0,
-                      background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)',
+                  <div style={{ display: 'flex', width: '100%', gap: '16px', alignItems: 'flex-start' }}>
+                    {/* Avatar */}
+                    <div style={{
+                      width: '40px', height: '40px', borderRadius: '50%', flexShrink: 0,
+                      background: 'rgba(198,241,53,0.1)', border: '1px solid rgba(198,241,53,0.3)',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      color: '#ef4444', cursor: 'pointer', transition: 'all 0.2s ease',
-                    }}
-                    onMouseEnter={e => (e.currentTarget.style.background = 'rgba(239,68,68,0.18)')}
-                    onMouseLeave={e => (e.currentTarget.style.background = 'rgba(239,68,68,0.08)')}
-                  >
-                    <Trash2 size={13} />
-                  </button>
+                      color: '#C6F135', fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: '15px',
+                    }}>
+                      {msg.name?.[0]?.toUpperCase() || 'M'}
+                    </div>
+
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', marginBottom: '6px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                          <span style={{ fontSize: '14px', fontWeight: 700, color: '#fff' }}>{msg.name}</span>
+                          <a
+                            href={`mailto:${msg.email}`}
+                            style={{ fontSize: '13px', color: '#C6F135', textDecoration: 'none' }}
+                          >
+                            {msg.email}
+                          </a>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          {/* Lead status selector */}
+                          <select
+                            value={msg.leadStatus || 'New'}
+                            onChange={e => handleUpdateStatus(msg.id, e.target.value as any)}
+                            style={{
+                              background: msg.leadStatus === 'Closed' ? 'rgba(255,255,255,0.06)' : msg.leadStatus === 'Contacted' ? 'rgba(96,165,250,0.15)' : 'rgba(198,241,53,0.15)',
+                              border: `1px solid ${msg.leadStatus === 'Closed' ? 'rgba(255,255,255,0.15)' : msg.leadStatus === 'Contacted' ? 'rgba(96,165,250,0.4)' : 'rgba(198,241,53,0.4)'}`,
+                              color: msg.leadStatus === 'Closed' ? '#888' : msg.leadStatus === 'Contacted' ? '#60a5fa' : '#C6F135',
+                              padding: '3px 8px', borderRadius: '8px', fontSize: '11px', fontWeight: 700,
+                              outline: 'none', cursor: 'pointer',
+                            }}
+                          >
+                            <option value="New">● New Lead</option>
+                            <option value="Contacted">● Contacted</option>
+                            <option value="Closed">● Closed</option>
+                          </select>
+
+                          <span style={{ fontSize: '11px', color: '#444' }}>
+                            {msg.timestamp ? new Date(msg.timestamp).toLocaleDateString('en-IN', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : ''}
+                          </span>
+                        </div>
+                      </div>
+
+                      <p style={{ fontSize: '13px', color: '#888', lineHeight: 1.6, wordBreak: 'break-word', marginBottom: '10px' }}>
+                        {msg.message}
+                      </p>
+
+                      {/* Notes / Internal status view */}
+                      {editingNoteId === msg.id ? (
+                        <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+                          <input
+                            type="text"
+                            placeholder="Add lead note / follow-up reminder..."
+                            value={noteText}
+                            onChange={e => setNoteText(e.target.value)}
+                            style={{
+                              flex: 1, padding: '6px 12px', background: '#141414',
+                              border: '1px solid rgba(198,241,53,0.3)', borderRadius: '8px',
+                              color: '#fff', fontSize: '12px', outline: 'none',
+                            }}
+                          />
+                          <button
+                            onClick={() => handleSaveNote(msg.id)}
+                            style={{
+                              padding: '6px 14px', background: '#C6F135', color: '#0C0C0C',
+                              border: 'none', borderRadius: '8px', fontSize: '11px', fontWeight: 700,
+                              cursor: 'pointer',
+                            }}
+                          >
+                            Save Note
+                          </button>
+                          <button
+                            onClick={() => setEditingNoteId(null)}
+                            style={{
+                              padding: '6px 10px', background: 'transparent', color: '#888',
+                              border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', fontSize: '11px',
+                              cursor: 'pointer',
+                            }}
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      ) : (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '6px' }}>
+                          {msg.adminNotes ? (
+                            <div style={{
+                              fontSize: '11px', color: '#C6F135', background: 'rgba(198,241,53,0.06)',
+                              padding: '4px 10px', borderRadius: '6px', border: '1px solid rgba(198,241,53,0.2)',
+                            }}>
+                              Note: {msg.adminNotes}
+                            </div>
+                          ) : null}
+                          <button
+                            onClick={() => startEditNote(msg)}
+                            style={{
+                              background: 'none', border: 'none', color: '#555',
+                              fontSize: '11px', cursor: 'pointer', textDecoration: 'underline',
+                              padding: 0,
+                            }}
+                          >
+                            {msg.adminNotes ? 'Edit note' : '+ Add follow-up note'}
+                          </button>
+                        </div>
+                      )}
+                    </div>
+
+                    <button
+                      onClick={() => {
+                        const updated = messages.filter(m => m.id !== msg.id);
+                        setMessages(updated);
+                        localStorage.setItem('contact_messages', JSON.stringify(updated));
+                      }}
+                      title="Delete message"
+                      style={{
+                        width: '32px', height: '32px', borderRadius: '8px', flexShrink: 0,
+                        background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        color: '#ef4444', cursor: 'pointer', transition: 'all 0.2s ease',
+                      }}
+                      onMouseEnter={e => (e.currentTarget.style.background = 'rgba(239,68,68,0.18)')}
+                      onMouseLeave={e => (e.currentTarget.style.background = 'rgba(239,68,68,0.08)')}
+                    >
+                      <Trash2 size={13} />
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>

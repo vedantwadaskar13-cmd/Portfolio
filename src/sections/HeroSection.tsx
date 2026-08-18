@@ -20,7 +20,26 @@ interface HeroSectionProps {
 
 export const HeroSection: React.FC<HeroSectionProps> = ({ onOpenResume }) => {
   const { personal } = usePortfolio();
-  const { name, title, summary, linkedin, github, email, heroImage } = personal;
+  const {
+    name,
+    title,
+    summary,
+    linkedin,
+    github,
+    email,
+    heroImage,
+    heroHeadlineTop,
+    heroHeadlineHighlight,
+    heroHeadlineBottom,
+    heroFontSize,
+    heroAvailableTag,
+    showBadge1,
+    badge1Value,
+    badge1Label,
+    showBadge2,
+    badge2Value,
+    badge2Label,
+  } = personal;
 
   const r1 = useReveal();
   const r2 = useReveal();
@@ -29,6 +48,11 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onOpenResume }) => {
   const scrollToWork = () => {
     document.querySelector('#projects')?.scrollIntoView({ behavior: 'smooth' });
   };
+
+  // Font size modifier calculation
+  const baseFontSize = heroFontSize || 94;
+  const minFontSize = Math.max(28, Math.round(baseFontSize * 0.45));
+  const dynamicHeroFontSize = `clamp(${minFontSize}px, ${(baseFontSize * 0.072).toFixed(1)}vw, ${baseFontSize}px)`;
 
   return (
     <section
@@ -79,7 +103,7 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onOpenResume }) => {
           {/* Available badge */}
           <div ref={r1} className="reveal" style={{ marginBottom: '28px' }}>
             <div className="section-tag">
-              Available for Work
+              {heroAvailableTag !== undefined && heroAvailableTag !== '' ? heroAvailableTag : 'Available for Work'}
             </div>
           </div>
 
@@ -88,18 +112,24 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onOpenResume }) => {
             <h1
               className="font-display"
               style={{
-                fontSize: 'clamp(42px, 6.8vw, 94px)',
+                fontSize: dynamicHeroFontSize,
                 lineHeight: '1.0',
                 letterSpacing: '-0.03em',
                 color: 'var(--text-h)',
                 marginBottom: '28px',
               }}
             >
-              AI/ML ENGINEER
+              {heroHeadlineTop || 'AI/ML ENGINEER'}
               <br />
-              <span style={{ color: 'var(--accent)' }}>&amp; FULL-STACK</span>
-              <br />
-              DEVELOPER
+              <span style={{ color: 'var(--accent)' }}>
+                {heroHeadlineHighlight || '& FULL-STACK'}
+              </span>
+              {(heroHeadlineBottom === undefined || heroHeadlineBottom !== '') && (
+                <>
+                  <br />
+                  <span>{heroHeadlineBottom || 'DEVELOPER'}</span>
+                </>
+              )}
             </h1>
 
             {/* Sub description */}
@@ -212,35 +242,47 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ onOpenResume }) => {
               />
             </div>
 
-            {/* Floating badge — top left */}
-            <div style={{
-              position: 'absolute',
-              top: '-16px', left: '-16px',
-              zIndex: 10,
-              background: 'var(--bg-card)',
-              border: '1px solid var(--border)',
-              borderRadius: '12px',
-              padding: '10px 16px',
-              backdropFilter: 'blur(20px)',
-              boxShadow: '0 8px 24px rgba(0,0,0,0.5)',
-            }}>
-              <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: '22px', color: 'var(--text-h)', lineHeight: 1 }}>2+</div>
-              <div style={{ fontSize: '10px', color: 'var(--text-b)', letterSpacing: '0.1em', textTransform: 'uppercase', marginTop: '2px' }}>Years Exp.</div>
-            </div>
+            {/* Floating badge 1 — top left */}
+            {(showBadge1 !== false) && (
+              <div style={{
+                position: 'absolute',
+                top: '-16px', left: '-16px',
+                zIndex: 10,
+                background: 'var(--bg-card)',
+                border: '1px solid var(--border)',
+                borderRadius: '12px',
+                padding: '10px 16px',
+                backdropFilter: 'blur(20px)',
+                boxShadow: '0 8px 24px rgba(0,0,0,0.5)',
+              }}>
+                <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: '22px', color: 'var(--text-h)', lineHeight: 1 }}>
+                  {badge1Value || '2+'}
+                </div>
+                <div style={{ fontSize: '10px', color: 'var(--text-b)', letterSpacing: '0.1em', textTransform: 'uppercase', marginTop: '2px' }}>
+                  {badge1Label || 'Years Exp.'}
+                </div>
+              </div>
+            )}
 
-            {/* Floating badge — bottom right */}
-            <div style={{
-              position: 'absolute',
-              bottom: '-16px', right: '-16px',
-              zIndex: 10,
-              background: 'var(--accent)',
-              borderRadius: '12px',
-              padding: '10px 16px',
-              boxShadow: '0 8px 24px var(--accent-glow)',
-            }}>
-              <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: '22px', color: '#0C0C0C', lineHeight: 1 }}>15+</div>
-              <div style={{ fontSize: '10px', color: 'rgba(12,12,12,0.7)', letterSpacing: '0.1em', textTransform: 'uppercase', marginTop: '2px' }}>Projects</div>
-            </div>
+            {/* Floating badge 2 — bottom right */}
+            {(showBadge2 !== false) && (
+              <div style={{
+                position: 'absolute',
+                bottom: '-16px', right: '-16px',
+                zIndex: 10,
+                background: 'var(--accent)',
+                borderRadius: '12px',
+                padding: '10px 16px',
+                boxShadow: '0 8px 24px var(--accent-glow)',
+              }}>
+                <div style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: '22px', color: '#0C0C0C', lineHeight: 1 }}>
+                  {badge2Value || '15+'}
+                </div>
+                <div style={{ fontSize: '10px', color: 'rgba(12,12,12,0.7)', letterSpacing: '0.1em', textTransform: 'uppercase', marginTop: '2px' }}>
+                  {badge2Label || 'Projects'}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

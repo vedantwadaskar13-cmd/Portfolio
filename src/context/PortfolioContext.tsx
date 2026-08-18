@@ -13,8 +13,19 @@ export interface PersonalInfo {
   linkedin: string;
   github: string;
   summary: string;
-  academicFocus: string;
+  academicFocus?: string;
   heroImage?: string;
+  heroHeadlineTop?: string;
+  heroHeadlineHighlight?: string;
+  heroHeadlineBottom?: string;
+  heroFontSize?: number; // rem base or pixel clamp modifier (default ~72 or 4.5rem)
+  heroAvailableTag?: string;
+  showBadge1?: boolean;
+  badge1Value?: string;
+  badge1Label?: string;
+  showBadge2?: boolean;
+  badge2Value?: string;
+  badge2Label?: string;
   resumeUrl?: string;
   customResumeText?: string;
 }

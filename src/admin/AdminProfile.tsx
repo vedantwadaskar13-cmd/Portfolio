@@ -196,13 +196,101 @@ export const AdminProfile: React.FC = () => {
           </div>
         </div>
 
-        {/* ── Section 04: Hero Image ── */}
+        {/* ── Section 04: Hero Text, Typography & Headline ── */}
         <div style={CARD_STYLE}>
           <div style={SECTION_TITLE}>
-            <ImageIcon size={15} style={{ color: '#C6F135' }} /> 04 — Hero Section Image
+            <Sparkles size={15} style={{ color: '#C6F135' }} /> 04 — Hero Headline, Available Tag & Typography
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '160px 1fr', gap: '24px', alignItems: 'start' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', marginBottom: '18px' }}>
+            <div>
+              <label style={LABEL_STYLE}>Top Headline Line (e.g. AI/ML ENGINEER)</label>
+              <input
+                style={FIELD_STYLE}
+                type="text"
+                value={formData.heroHeadlineTop !== undefined ? formData.heroHeadlineTop : 'AI/ML ENGINEER'}
+                onChange={e => setFormData({ ...formData, heroHeadlineTop: e.target.value })}
+                onFocus={e => (e.target.style.borderColor = 'rgba(198,241,53,0.4)')}
+                onBlur={e => (e.target.style.borderColor = 'rgba(255,255,255,0.08)')}
+              />
+            </div>
+
+            <div>
+              <label style={LABEL_STYLE}>Highlighted Accent Line (e.g. & FULL-STACK)</label>
+              <input
+                style={{ ...FIELD_STYLE, color: '#C6F135' }}
+                type="text"
+                value={formData.heroHeadlineHighlight !== undefined ? formData.heroHeadlineHighlight : '& FULL-STACK'}
+                onChange={e => setFormData({ ...formData, heroHeadlineHighlight: e.target.value })}
+                onFocus={e => (e.target.style.borderColor = 'rgba(198,241,53,0.4)')}
+                onBlur={e => (e.target.style.borderColor = 'rgba(255,255,255,0.08)')}
+              />
+            </div>
+
+            <div>
+              <label style={LABEL_STYLE}>Bottom Headline Line (e.g. DEVELOPER)</label>
+              <input
+                style={FIELD_STYLE}
+                type="text"
+                value={formData.heroHeadlineBottom !== undefined ? formData.heroHeadlineBottom : 'DEVELOPER'}
+                onChange={e => setFormData({ ...formData, heroHeadlineBottom: e.target.value })}
+                onFocus={e => (e.target.style.borderColor = 'rgba(198,241,53,0.4)')}
+                onBlur={e => (e.target.style.borderColor = 'rgba(255,255,255,0.08)')}
+              />
+            </div>
+
+            <div>
+              <label style={LABEL_STYLE}>Status Pill Tag (e.g. Available for Work)</label>
+              <input
+                style={FIELD_STYLE}
+                type="text"
+                value={formData.heroAvailableTag !== undefined ? formData.heroAvailableTag : 'Available for Work'}
+                onChange={e => setFormData({ ...formData, heroAvailableTag: e.target.value })}
+                onFocus={e => (e.target.style.borderColor = 'rgba(198,241,53,0.4)')}
+                onBlur={e => (e.target.style.borderColor = 'rgba(255,255,255,0.08)')}
+              />
+            </div>
+          </div>
+
+          {/* Font size slider */}
+          <div style={{
+            background: '#0C0C0C', border: '1px solid rgba(255,255,255,0.08)',
+            borderRadius: '12px', padding: '16px',
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+              <label style={{ ...LABEL_STYLE, marginBottom: 0 }}>Hero Headline Font Size</label>
+              <span style={{ fontFamily: 'Syne, sans-serif', fontWeight: 800, fontSize: '15px', color: '#C6F135' }}>
+                {formData.heroFontSize || 94}px
+              </span>
+            </div>
+            <input
+              type="range"
+              min="50"
+              max="130"
+              step="2"
+              value={formData.heroFontSize || 94}
+              onChange={e => setFormData({ ...formData, heroFontSize: Number(e.target.value) })}
+              style={{
+                width: '100%',
+                accentColor: '#C6F135',
+                cursor: 'pointer',
+              }}
+            />
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '10px', color: '#444', marginTop: '4px' }}>
+              <span>50px (Compact)</span>
+              <span>94px (Default)</span>
+              <span>130px (Giant)</span>
+            </div>
+          </div>
+        </div>
+
+        {/* ── Section 05: Hero Image & Floating Badges ── */}
+        <div style={CARD_STYLE}>
+          <div style={SECTION_TITLE}>
+            <ImageIcon size={15} style={{ color: '#C6F135' }} /> 05 — Hero Portrait Image & Floating Badges
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '160px 1fr', gap: '24px', alignItems: 'start', marginBottom: '24px' }}>
             {/* Preview */}
             <div style={{ position: 'relative' }}>
               <div style={{
@@ -218,7 +306,7 @@ export const AdminProfile: React.FC = () => {
                 <img
                   src={heroPreview}
                   alt="Hero preview"
-                  style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center top', mixBlendMode: 'multiply' }}
+                  style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center top' }}
                   onError={e => { (e.target as HTMLImageElement).src = '/assets/images/hero_vedant.jpg'; }}
                 />
               </div>
@@ -278,7 +366,7 @@ export const AdminProfile: React.FC = () => {
                   <div>
                     <div style={{ fontSize: '13px', fontWeight: 700, color: '#fff' }}>Click to upload new photo</div>
                     <div style={{ fontSize: '11px', color: '#555', marginTop: '2px' }}>
-                      {heroImgStatus || 'White or light background works best with the neon frame effect'}
+                      {heroImgStatus || 'Directly displayed crisp inside the neon hero frame'}
                     </div>
                   </div>
                 </label>
@@ -312,18 +400,109 @@ export const AdminProfile: React.FC = () => {
                     </button>
                   )}
                 </div>
-                <p style={{ fontSize: '11px', color: '#444', marginTop: '6px' }}>
-                  Leave empty to use the default <code style={{ color: '#555' }}>/assets/images/hero_vedant.jpg</code>
-                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* ── Floating Badge Boxes Config (Years Exp & Projects) ── */}
+          <div style={{
+            borderTop: '1px solid rgba(255,255,255,0.07)',
+            paddingTop: '20px',
+          }}>
+            <div style={{ fontSize: '12px', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: '#888', marginBottom: '14px' }}>
+              Hero Floating Badges / Counter Boxes
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+              {/* Badge 1 (Top-Left) */}
+              <div style={{
+                background: '#0C0C0C', border: '1px solid rgba(255,255,255,0.08)',
+                borderRadius: '14px', padding: '16px',
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                  <span style={{ fontSize: '13px', fontWeight: 700, color: '#fff' }}>Badge 1 (Top-Left)</span>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '12px', color: formData.showBadge1 !== false ? '#C6F135' : '#555' }}>
+                    <input
+                      type="checkbox"
+                      checked={formData.showBadge1 !== false}
+                      onChange={e => setFormData({ ...formData, showBadge1: e.target.checked })}
+                      style={{ accentColor: '#C6F135' }}
+                    />
+                    <span>{formData.showBadge1 !== false ? 'Visible' : 'Hidden'}</span>
+                  </label>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '8px' }}>
+                  <div>
+                    <label style={LABEL_STYLE}>Value</label>
+                    <input
+                      style={FIELD_STYLE}
+                      type="text"
+                      placeholder="2+"
+                      value={formData.badge1Value !== undefined ? formData.badge1Value : '2+'}
+                      onChange={e => setFormData({ ...formData, badge1Value: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <label style={LABEL_STYLE}>Label</label>
+                    <input
+                      style={FIELD_STYLE}
+                      type="text"
+                      placeholder="Years Exp."
+                      value={formData.badge1Label !== undefined ? formData.badge1Label : 'Years Exp.'}
+                      onChange={e => setFormData({ ...formData, badge1Label: e.target.value })}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Badge 2 (Bottom-Right) */}
+              <div style={{
+                background: '#0C0C0C', border: '1px solid rgba(255,255,255,0.08)',
+                borderRadius: '14px', padding: '16px',
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                  <span style={{ fontSize: '13px', fontWeight: 700, color: '#fff' }}>Badge 2 (Bottom-Right)</span>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '12px', color: formData.showBadge2 !== false ? '#C6F135' : '#555' }}>
+                    <input
+                      type="checkbox"
+                      checked={formData.showBadge2 !== false}
+                      onChange={e => setFormData({ ...formData, showBadge2: e.target.checked })}
+                      style={{ accentColor: '#C6F135' }}
+                    />
+                    <span>{formData.showBadge2 !== false ? 'Visible' : 'Hidden'}</span>
+                  </label>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '8px' }}>
+                  <div>
+                    <label style={LABEL_STYLE}>Value</label>
+                    <input
+                      style={FIELD_STYLE}
+                      type="text"
+                      placeholder="15+"
+                      value={formData.badge2Value !== undefined ? formData.badge2Value : '15+'}
+                      onChange={e => setFormData({ ...formData, badge2Value: e.target.value })}
+                    />
+                  </div>
+                  <div>
+                    <label style={LABEL_STYLE}>Label</label>
+                    <input
+                      style={FIELD_STYLE}
+                      type="text"
+                      placeholder="Projects"
+                      value={formData.badge2Label !== undefined ? formData.badge2Label : 'Projects'}
+                      onChange={e => setFormData({ ...formData, badge2Label: e.target.value })}
+                    />
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* ── Section 05: Resume ── */}
+        {/* ── Section 06: Resume ── */}
         <div style={CARD_STYLE}>
           <div style={SECTION_TITLE}>
-            <FileText size={15} style={{ color: '#a78bfa' }} /> 05 — Resume File & Upload
+            <FileText size={15} style={{ color: '#a78bfa' }} /> 06 — Resume File & Upload
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
             <div>
@@ -351,10 +530,10 @@ export const AdminProfile: React.FC = () => {
           </div>
         </div>
 
-        {/* ── Section 06: Admin Security ── */}
+        {/* ── Section 07: Admin Security ── */}
         <div style={CARD_STYLE}>
           <div style={SECTION_TITLE}>
-            <Key size={15} style={{ color: '#fbbf24' }} /> 06 — Admin Login & Security
+            <Key size={15} style={{ color: '#fbbf24' }} /> 07 — Admin Login & Security
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
             <div>
